@@ -798,6 +798,9 @@ async def delete_pigpen_operator(operator_id: str, request: Request):
     if not operator:
         raise HTTPException(status_code=404, detail="Operator not found")
     
+    # CANONICAL PROTECTION CHECK
+    await check_canonical_access(user, operator, "delete")
+    
     await save_version(user, "pigpen", operator_id, operator, "delete", f"Deleted operator: {operator.get('name')}")
     await db.pigpen_operators.update_one({"operator_id": operator_id}, {"$set": {"is_active": False}})
     await log_audit(user, "delete", "pigpen", operator_id, operator.get("name"))
