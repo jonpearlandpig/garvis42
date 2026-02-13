@@ -1,34 +1,90 @@
-.App-logo {
-    height: 40vmin;
-    pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-    .App-logo {
-        animation: App-logo-spin infinite 20s linear;
-    }
-}
-
-.App-header {
-    background-color: #0f0f10;
+.App {
     min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-size: calc(10px + 2vmin);
-    color: white;
 }
 
-.App-link {
-    color: #61dafb;
+/* Markdown prose styles for chat */
+.prose {
+    color: inherit;
 }
 
-@keyframes App-logo-spin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
+.prose p {
+    margin-bottom: 0.5em;
+}
+
+.prose p:last-child {
+    margin-bottom: 0;
+}
+
+.prose code {
+    background: hsl(var(--secondary));
+    padding: 0.125em 0.25em;
+    border-radius: 0;
+    font-size: 0.875em;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.prose pre {
+    background: hsl(var(--background));
+    border: 1px solid hsl(var(--border));
+    padding: 1em;
+    overflow-x: auto;
+    margin: 0.5em 0;
+}
+
+.prose pre code {
+    background: transparent;
+    padding: 0;
+}
+
+.prose ul, .prose ol {
+    padding-left: 1.5em;
+    margin: 0.5em 0;
+}
+
+.prose li {
+    margin: 0.25em 0;
+}
+
+.prose strong {
+    font-weight: 600;
+}
+
+.prose h1, .prose h2, .prose h3, .prose h4 {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    margin-top: 1em;
+    margin-bottom: 0.5em;
+}
+
+.prose a {
+    color: hsl(var(--primary));
+    text-decoration: underline;
+}
+
+.prose blockquote {
+    border-left: 2px solid hsl(var(--primary));
+    padding-left: 1em;
+    margin: 0.5em 0;
+    color: hsl(var(--muted-foreground));
+}
+
+/* Line clamp utilities */
+.line-clamp-1 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+}
+
+.line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+/* Selection styles */
+::selection {
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
 }
