@@ -1,0 +1,78 @@
+{
+  "timestamp": "2026-02-13T22:30:11.265289",
+  "total_tests": 10,
+  "passed_tests": 10,
+  "success_rate": "100.0%",
+  "results": [
+    {
+      "test": "Dashboard Stats - All Counts Correct",
+      "success": true,
+      "details": "Docs: 18, Glossary: 30, Components: 8, Operators: 18, Brands: 1",
+      "expected": null,
+      "actual": null
+    },
+    {
+      "test": "Pig Pen API - 18 Operators",
+      "success": true,
+      "details": "Found 18 operators",
+      "expected": null,
+      "actual": null
+    },
+    {
+      "test": "Pig Pen API - Categories Present",
+      "success": true,
+      "details": "Categories: Business, Core Resolution, Creative, Optional, Quality, Systems",
+      "expected": null,
+      "actual": null
+    },
+    {
+      "test": "Pig Pen API - Category Filter",
+      "success": true,
+      "details": "Core Resolution: 1 operators",
+      "expected": null,
+      "actual": null
+    },
+    {
+      "test": "Brands API - 1 Brand Profile",
+      "success": true,
+      "details": "Found 1 brand(s)",
+      "expected": null,
+      "actual": null
+    },
+    {
+      "test": "Brands API - Brand Structure",
+      "success": true,
+      "details": "Brand: GoGarvis Default",
+      "expected": null,
+      "actual": null
+    },
+    {
+      "test": "Audit Log API - Auth Required",
+      "success": true,
+      "details": "Correctly requires authentication",
+      "expected": null,
+      "actual": null
+    },
+    {
+      "test": "Pig Pen Categories API",
+      "success": true,
+      "details": "Categories: Business, Core Resolution, Creative, Optional, Quality, Systems",
+      "expected": null,
+      "actual": null
+    },
+    {
+      "test": "Individual Operator API",
+      "success": true,
+      "details": "Operator: GARVIS \u2014 Core Resolver",
+      "expected": null,
+      "actual": null
+    },
+    {
+      "test": "Individual Brand API",
+      "success": true,
+      "details": "Brand: GoGarvis Default",
+      "expected": null,
+      "actual": null
+    }
+  ]
+}
