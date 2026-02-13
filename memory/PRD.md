@@ -1,92 +1,146 @@
-# GoGarvis Portal - Product Requirements Document
+# GoGarvis Portal - Product Requirements Document v2.0
 
 ## Overview
-GoGarvis is a full-stack web application serving as the access portal for the GARVIS Full Stack architecture - a sovereign intelligence and enforcement system developed by Pearl & Pig.
+GoGarvis is a full-stack CMS portal for the GARVIS Full Stack architecture - a sovereign intelligence and enforcement system by Pearl & Pig. Now with content management, version control, and audit logging.
 
 ## Original Problem Statement
-Build a web application based on the architecture described in the GoGarvis GitHub repository PDFs, serving as an access point for users with:
+Build a web application with:
 - Browse/search documentation
-- System component visualization
-- Admin dashboard
-- AI-powered assistant
+- Implement system components
+- Admin dashboard with CMS capabilities
+- Role-based access control
+- Version history with rollback
+- Audit logging for all changes
 
 ## Tech Stack
-- **Frontend**: React 19, Tailwind CSS, Shadcn UI components
+- **Frontend**: React 19, Tailwind CSS, Shadcn UI
 - **Backend**: FastAPI (Python)
 - **Database**: MongoDB
-- **AI Integration**: OpenAI GPT-5.2 via Emergent LLM Key
+- **AI**: OpenAI GPT-5.2 via Emergent LLM Key
+- **Auth**: Emergent Google OAuth
 
-## User Personas
-1. **System Administrators** - Monitor system status, manage configurations
-2. **Developers** - Browse documentation, understand architecture
-3. **Enterprise Users** - Query GARVIS AI, search glossary
-4. **Stakeholders** - View system overview, access reports
+## User Personas & Roles
+1. **Admin** - Full access: manage users, edit all content, view audit logs
+2. **Editor** - Can create/edit/delete content, view audit logs
+3. **Viewer** - Read-only access to all content (default for new users)
 
 ## Core Requirements
-- [x] Dashboard with system status and metrics
-- [x] Documentation browser with PDF content extraction
-- [x] Architecture visualization with expandable components
-- [x] AI-powered chat (GARVIS AI) with GPT-5.2
-- [x] Canonical glossary with search/filter
-- [x] Dark/Light theme toggle
-- [x] Responsive design (mobile/desktop)
+
+### Authentication & Authorization
+- [x] Emergent Google OAuth integration
+- [x] Role-based access (Admin, Editor, Viewer)
+- [x] First user automatically becomes admin
+- [x] Session management with cookies
+
+### Content Management
+- [x] Documents - CRUD with version history
+- [x] Glossary Terms - CRUD with version history
+- [x] System Components - Update with version history
+- [x] Pig Pen Operators - Full CRUD (18 seeded)
+- [x] Brand Profiles - Full CRUD (1 seeded)
+
+### Version Control & Audit
+- [x] Full version history for all content types
+- [x] Rollback to any previous version
+- [x] Audit log for all changes (who, what, when)
+- [x] Change summaries and details stored
+
+### Pages Implemented
+1. **Dashboard** - Stats, authority flow preview
+2. **Documentation** - Search, filter, view PDFs
+3. **Architecture** - Interactive component diagram
+4. **Pig Pen** - TAI-D operators registry (NEW)
+5. **Brands** - Design system profiles (NEW)
+6. **GARVIS AI** - GPT-5.2 chat
+7. **Glossary** - Searchable terms
+8. **Audit Log** - Change history (auth required) (NEW)
+9. **Admin Users** - Role management (admin only) (NEW)
+10. **Settings** - Theme toggle, system info
+11. **Login** - Google OAuth entry point (NEW)
 
 ## What's Been Implemented (Feb 13, 2026)
 
-### Backend (server.py)
-- `/api/health` - Health check endpoint
-- `/api/dashboard/stats` - System statistics
-- `/api/documents` - Document listing with search/filter
-- `/api/documents/{filename}` - PDF content extraction
-- `/api/glossary` - Glossary terms with categories
-- `/api/architecture/components` - System components
-- `/api/chat` - AI chat with GPT-5.2
-- `/api/chat/history/{session_id}` - Chat history
+### Backend APIs
+- Auth: `/api/auth/session`, `/api/auth/me`, `/api/auth/logout`
+- Admin: `/api/admin/users`, `/api/admin/users/{id}/role`
+- Documents: Full CRUD + categories
+- Glossary: Full CRUD + categories
+- Components: Read + Update
+- Pig Pen: Full CRUD + categories
+- Brands: Full CRUD
+- Audit: `/api/audit-log`
+- Versions: `/api/versions/{type}/{id}`, rollback endpoint
+- Chat: GPT-5.2 with session history
 
-### Frontend Pages
-1. **Dashboard** - System overview, stats cards, authority flow preview
-2. **Documentation** - Search, category filter, PDF viewer
-3. **Architecture** - Interactive component diagram with expandable details
-4. **GARVIS AI** - Chat interface with markdown support
-5. **Glossary** - Searchable canonical terms
-6. **Settings** - Theme toggle, system info
+### Database Collections
+- users, user_sessions
+- documents, glossary_terms, components
+- pigpen_operators, brand_profiles
+- audit_log, content_versions
+- chat_history
 
-### Design System
-- Brutal minimalist aesthetic
-- JetBrains Mono + Manrope fonts
-- Orange (#FF4500) primary accent
-- Sharp edges (0px border radius)
-- Dark mode default
+### Seeded Data
+- 18 Documents (from PDFs)
+- 30 Glossary Terms
+- 8 System Components
+- 18 Pig Pen Operators (TAI-D registry)
+- 1 Brand Profile
 
-## Test Results
-- Backend: 100% (11/11 tests passed)
-- Frontend: 95% (19/20 tests passed)
+## Test Results (Iteration 2)
+- Backend: 100% (10/10 tests passed)
+- Frontend: 100% (19/19 tests passed)
+
+## How to Use CMS Features
+
+### Adding Pig Pen Operators
+1. Login via Google (first user = admin)
+2. Navigate to Pig Pen
+3. Click "ADD OPERATOR"
+4. Fill TAI-D, name, capabilities, role, authority, status, category
+5. Save - automatically logged to audit
+
+### Updating Brand Profile
+1. Login with Editor/Admin role
+2. Navigate to Brands
+3. Click edit icon on existing brand
+4. Update colors, fonts, guidelines
+5. Save - previous version stored, change logged
+
+### Rollback
+1. View audit log to find change
+2. Navigate to content item
+3. Call rollback API with version_id
+4. Previous state restored, rollback logged
 
 ## Prioritized Backlog
 
-### P0 (Critical)
-- None remaining
+### P0 (Critical) - DONE
+- [x] Role-based CMS
+- [x] Version history
+- [x] Audit logging
+- [x] Pig Pen management
+- [x] Brand management
 
 ### P1 (High Priority)
-- User authentication system
-- Document upload functionality
-- Admin user management
-- Audit log viewer
+- [ ] Document upload (new PDFs)
+- [ ] Inline content editor (rich text)
+- [ ] Bulk operations
+- [ ] Export audit log
 
 ### P2 (Medium Priority)
-- PDF annotation/highlighting
-- Export chat transcripts
-- Advanced search with filters
-- System notifications
+- [ ] Version diff viewer
+- [ ] Content scheduling
+- [ ] Notification system
+- [ ] API rate limiting
 
 ### P3 (Nice to Have)
-- Multi-language support
-- Keyboard shortcuts
-- Customizable dashboard widgets
-- Integration with external systems
+- [ ] Multi-language support
+- [ ] Content templates
+- [ ] Workflow approvals
+- [ ] Integration webhooks
 
 ## Next Tasks
-1. Add user authentication (JWT or Emergent Google Auth)
-2. Implement document upload for new PDFs
-3. Add audit log viewer page
-4. Create user management dashboard
+1. Test authenticated editing flow end-to-end
+2. Add document upload functionality
+3. Create version diff viewer UI
+4. Implement bulk operations for Pig Pen
