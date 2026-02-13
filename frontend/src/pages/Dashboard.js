@@ -129,33 +129,41 @@ const Dashboard = () => {
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-px bg-border">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-px bg-border">
                 <StatCard 
                     icon={FileText} 
                     label="Documents" 
                     value={stats?.total_documents || 0}
-                    sublabel={`${stats?.document_categories || 0} categories`}
                     onClick={() => navigate('/docs')}
                 />
                 <StatCard 
                     icon={Database} 
-                    label="Glossary Terms" 
+                    label="Glossary" 
                     value={stats?.total_glossary_terms || 0}
-                    sublabel={`${stats?.glossary_categories || 0} categories`}
                     onClick={() => navigate('/glossary')}
                 />
                 <StatCard 
                     icon={Layers} 
                     label="Components" 
                     value={stats?.total_components || 0}
-                    sublabel={`${stats?.active_components || 0} active`}
                     onClick={() => navigate('/architecture')}
+                />
+                <StatCard 
+                    icon={Bot} 
+                    label="Pig Pen" 
+                    value={stats?.total_pigpen_operators || 0}
+                    onClick={() => navigate('/pigpen')}
+                />
+                <StatCard 
+                    icon={Palette} 
+                    label="Brands" 
+                    value={stats?.total_brand_profiles || 0}
+                    onClick={() => navigate('/brands')}
                 />
                 <StatCard 
                     icon={Zap} 
                     label="GARVIS AI" 
                     value="ONLINE"
-                    sublabel="GPT-5.2 powered"
                     onClick={() => navigate('/chat')}
                 />
             </div>
