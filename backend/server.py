@@ -1,4 +1,5 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Query
+from fastapi import FastAPI, APIRouter, HTTPException, Query, Depends, Request, Response
+from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -6,11 +7,11 @@ import os
 import logging
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import PyPDF2
-import asyncio
+import httpx
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -20,53 +21,188 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
-# Create the main app without a prefix
+# Create the main app
 app = FastAPI(title="GoGarvis API")
-
-# Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
 # LLM Integration
 from emergentintegrations.llm.chat import LlmChat, UserMessage
-
-# Store chat instances per session
 chat_sessions = {}
 
-# Path to GoGarvis documentation
 DOCS_PATH = Path("/app/gogarvis_docs")
 
-# ============== Models ==============
+# ============== Auth Models ==============
 
-class StatusCheck(BaseModel):
+class User(BaseModel):
     model_config = ConfigDict(extra="ignore")
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    client_name: str
+    user_id: str
+    email: str
+    name: str
+    picture: Optional[str] = None
+    role: str = "viewer"  # admin, editor, viewer
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class UserSession(BaseModel):
+    user_id: str
+    session_token: str
+    expires_at: datetime
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+# ============== Content Models ==============
+
+class ContentVersion(BaseModel):
+    version_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    content_id: str
+    content_type: str  # document, glossary, component, pigpen, brand
+    data: Dict[str, Any]
+    changed_by: str  # user_id
+    changed_by_name: str
+    change_type: str  # create, update, delete, rollback
+    change_summary: str
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
-class StatusCheckCreate(BaseModel):
-    client_name: str
+class AuditLogEntry(BaseModel):
+    log_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    user_name: str
+    user_email: str
+    action: str  # create, update, delete, rollback, login, logout
+    content_type: str
+    content_id: str
+    content_title: str
+    details: Dict[str, Any] = {}
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class Document(BaseModel):
     model_config = ConfigDict(extra="ignore")
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    doc_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     filename: str
     title: str
     category: str
     description: str
     content: str = ""
+    is_active: bool = True
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class GlossaryTerm(BaseModel):
     model_config = ConfigDict(extra="ignore")
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    term_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    term: str
+    definition: str
+    category: str
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class SystemComponent(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    component_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    description: str
+    status: str = "active"
+    layer: int
+    key_functions: List[str]
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class PigPenOperator(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    operator_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    tai_d: str  # TAI-D identifier
+    name: str
+    capabilities: str
+    role: str
+    authority: str
+    status: str = "LOCKED"
+    category: str  # Core Resolution, Business, Creative, Systems, Quality, Optional
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class BrandProfile(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    brand_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    description: str
+    primary_color: str = "#FF4500"
+    secondary_color: str = "#1A1A1A"
+    font_heading: str = "JetBrains Mono"
+    font_body: str = "Manrope"
+    logo_url: Optional[str] = None
+    style_guidelines: str = ""
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+# ============== Request Models ==============
+
+class DocumentCreate(BaseModel):
+    filename: str
+    title: str
+    category: str
+    description: str
+    content: str = ""
+
+class DocumentUpdate(BaseModel):
+    title: Optional[str] = None
+    category: Optional[str] = None
+    description: Optional[str] = None
+    content: Optional[str] = None
+
+class GlossaryTermCreate(BaseModel):
     term: str
     definition: str
     category: str
 
-class ChatMessage(BaseModel):
+class GlossaryTermUpdate(BaseModel):
+    term: Optional[str] = None
+    definition: Optional[str] = None
+    category: Optional[str] = None
+
+class ComponentUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    status: Optional[str] = None
+    key_functions: Optional[List[str]] = None
+
+class PigPenOperatorCreate(BaseModel):
+    tai_d: str
+    name: str
+    capabilities: str
     role: str
-    content: str
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    authority: str
+    status: str = "LOCKED"
+    category: str
+
+class PigPenOperatorUpdate(BaseModel):
+    name: Optional[str] = None
+    capabilities: Optional[str] = None
+    role: Optional[str] = None
+    authority: Optional[str] = None
+    status: Optional[str] = None
+    category: Optional[str] = None
+
+class BrandProfileCreate(BaseModel):
+    name: str
+    description: str
+    primary_color: str = "#FF4500"
+    secondary_color: str = "#1A1A1A"
+    font_heading: str = "JetBrains Mono"
+    font_body: str = "Manrope"
+    logo_url: Optional[str] = None
+    style_guidelines: str = ""
+
+class BrandProfileUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    primary_color: Optional[str] = None
+    secondary_color: Optional[str] = None
+    font_heading: Optional[str] = None
+    font_body: Optional[str] = None
+    logo_url: Optional[str] = None
+    style_guidelines: Optional[str] = None
 
 class ChatRequest(BaseModel):
     message: str
@@ -76,257 +212,636 @@ class ChatResponse(BaseModel):
     response: str
     session_id: str
 
-class SystemComponent(BaseModel):
-    id: str
-    name: str
-    description: str
-    status: str
-    layer: int
-    key_functions: List[str]
+class RoleUpdate(BaseModel):
+    role: str
 
-# ============== Canonical Glossary ==============
+# ============== Auth Helpers ==============
 
-GLOSSARY_DATA = [
-    # Core Systems
-    {"term": "GARVIS", "definition": "Sovereign intelligence and enforcement layer governing reasoning, routing, and execution safety across all Pearl & Pig systems. GARVIS enforces truth but does not approve decisions.", "category": "Core Systems"},
-    {"term": "Pearl & Pig", "definition": "Systems-first creative IP studio and sole owner of the GARVIS architecture and its constituent systems.", "category": "Core Systems"},
-    {"term": "ECOS", "definition": "Enterprise Creative Operating System - A tenant-safe, white-label deployment pattern powered by GARVIS. Enterprises own their knowledge bases and outputs; Pearl & Pig retains system ownership.", "category": "Core Systems"},
-    {"term": "Telauthorium", "definition": "Authoritative authorship, provenance, and rights registry. Nothing is real, licensable, or defensible unless registered in Telauthorium.", "category": "Core Systems"},
-    {"term": "Flightpath COS", "definition": "Creative and operational law governing phase discipline, proof gates, and completion logic from SPARK through SUNSET.", "category": "Core Systems"},
-    {"term": "MOSE", "definition": "Multi-Operator Systems Engine - Orchestration engine that routes work through Pig Pen operators under GARVIS enforcement and Flightpath constraints.", "category": "Core Systems"},
-    {"term": "TELA", "definition": "Trusted Efficiency Liaison Assistant - Execution layer that converts authorized intent into real-world action through constrained adapters.", "category": "Core Systems"},
-    {"term": "Pig Pen", "definition": "Frozen registry of non-human cognition operators (TAI-D) used for analysis, flags, and recommendations. Pig Pen operators never approve decisions.", "category": "Core Systems"},
-    {"term": "UOL", "definition": "User Overlay Layer - Permissioned, advisory customization layer allowing user perspectives, goals, and role-based visibility without altering system authority.", "category": "Core Systems"},
-    # Identity & Authority
-    {"term": "TID", "definition": "Telauthorium ID - Immutable identity assigned to every object (idea, decision, artifact, output, deal, report, execution event).", "category": "Identity"},
-    {"term": "TAID", "definition": "Telauthorium Authority ID - Immutable identifier representing a real human authority. All accountability resolves to a TAID.", "category": "Identity"},
-    {"term": "TAI-D", "definition": "Telauthorium AI-D - Identifier assigned to a non-human Pig Pen operator. TAI-Ds have cognition authority only.", "category": "Identity"},
-    {"term": "TSID", "definition": "Telauthorium Sovereign ID - Non-delegable sovereign authority identifier held by the Founder/Architect.", "category": "Identity"},
-    {"term": "UOID", "definition": "User Overlay ID - Identifier for a specific user overlay pack applied at runtime.", "category": "Identity"},
-    # Operational Terms
-    {"term": "Routing Plan", "definition": "Ordered sequence of Pig Pen operator consults produced by MOSE prior to execution.", "category": "Operations"},
-    {"term": "Execution Event", "definition": "Ledger-recorded action performed by TELA.", "category": "Operations"},
-    {"term": "Decision Event", "definition": "Ledger-recorded resolution made by a human TAID.", "category": "Operations"},
-    {"term": "Enforcement Event", "definition": "Ledger-recorded block, halt, or constraint trigger.", "category": "Operations"},
-    {"term": "HALT", "definition": "System state indicating execution is illegal or unsafe to proceed.", "category": "Operations"},
-    {"term": "PAUSE", "definition": "System state indicating execution is legal but requires human judgment before proceeding.", "category": "Operations"},
-    # Commercial Terms
-    {"term": "License Bundle", "definition": "A scoped, time-bound grant of access to GARVIS-powered capabilities. Ownership is never transferred.", "category": "Commercial"},
-    {"term": "Component License", "definition": "License granting access to a specific system component (e.g., Telauthorium) under defined constraints.", "category": "Commercial"},
-    {"term": "OEM Deployment", "definition": "Sandboxed, white-label deployment governed by Pearl & Pig with strict architectural isolation.", "category": "Commercial"},
-    {"term": "Canon Lock", "definition": "Document version control requiring founder authorization for any changes, with version numbering and published delta logs.", "category": "Commercial"},
-    # Phases
-    {"term": "SPARK", "definition": "Initial ideation phase in the Flightpath COS lifecycle.", "category": "Phases"},
-    {"term": "BUILD", "definition": "Development and construction phase in the Flightpath COS lifecycle.", "category": "Phases"},
-    {"term": "LAUNCH", "definition": "Release and deployment phase in the Flightpath COS lifecycle.", "category": "Phases"},
-    {"term": "EXPAND", "definition": "Growth and scaling phase in the Flightpath COS lifecycle.", "category": "Phases"},
-    {"term": "EVERGREEN", "definition": "Ongoing maintenance and evolution phase in the Flightpath COS lifecycle.", "category": "Phases"},
-    {"term": "SUNSET", "definition": "End-of-life and deprecation phase in the Flightpath COS lifecycle.", "category": "Phases"},
-]
+async def get_current_user(request: Request) -> Optional[User]:
+    """Get current user from session token in cookie or Authorization header"""
+    session_token = request.cookies.get("session_token")
+    
+    if not session_token:
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            session_token = auth_header.split(" ")[1]
+    
+    if not session_token:
+        return None
+    
+    session = await db.user_sessions.find_one({"session_token": session_token}, {"_id": 0})
+    if not session:
+        return None
+    
+    expires_at = session["expires_at"]
+    if isinstance(expires_at, str):
+        expires_at = datetime.fromisoformat(expires_at)
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    if expires_at < datetime.now(timezone.utc):
+        return None
+    
+    user = await db.users.find_one({"user_id": session["user_id"]}, {"_id": 0})
+    if not user:
+        return None
+    
+    return User(**user)
 
-# ============== Architecture Components ==============
+async def require_auth(request: Request) -> User:
+    """Require authenticated user"""
+    user = await get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    return user
 
-SYSTEM_COMPONENTS = [
-    {
-        "id": "sovereign",
-        "name": "SOVEREIGN AUTHORITY",
-        "description": "TSID-0001 Founder / Architect - Constitutional authority, final arbitration, versioning & canon control",
-        "status": "active",
-        "layer": 0,
-        "key_functions": ["Constitutional authority", "Final arbitration", "Versioning & canon control"]
-    },
-    {
-        "id": "telauthorium",
-        "name": "TELAUTHORIUM",
-        "description": "Authorship, Provenance, Rights Registry - TID/TAID/TAI-D enforcement, rights clarity & licensing state",
-        "status": "active",
-        "layer": 1,
-        "key_functions": ["Authorship", "Provenance", "Rights Registry", "TID/TAID/TAI-D enforcement"]
-    },
-    {
-        "id": "garvis",
-        "name": "GARVIS",
-        "description": "Sovereign Intelligence & Enforcement - Truth enforcement, drift & risk detection",
-        "status": "active",
-        "layer": 2,
-        "key_functions": ["Truth enforcement", "Drift detection", "Risk detection", "Halts/pauses authority"]
-    },
-    {
-        "id": "flightpath",
-        "name": "FLIGHTPATH COS",
-        "description": "Creative Law & Phase Discipline - SPARK → BUILD → LAUNCH → EXPAND → EVERGREEN → SUNSET",
-        "status": "active",
-        "layer": 3,
-        "key_functions": ["Phase discipline", "Proof gates", "Phase blocks", "Routes cognition"]
-    },
-    {
-        "id": "mose",
-        "name": "MOSE",
-        "description": "Multi-Operator Systems Engine - Operator routing & sequencing, escalation & conflict resolution",
-        "status": "active",
-        "layer": 4,
-        "key_functions": ["Operator routing", "Sequencing", "Escalation", "Conflict resolution", "UOL application"]
-    },
-    {
-        "id": "pigpen",
-        "name": "PIG PEN",
-        "description": "Non-Human Cognition Operators (TAI-D) - Analysis, flags, recommendations (no approval authority)",
-        "status": "active",
-        "layer": 5,
-        "key_functions": ["Analysis", "Flags", "Recommendations", "Frozen registry"]
-    },
-    {
-        "id": "tela",
-        "name": "TELA",
-        "description": "Trusted Efficiency Liaison Assistant - Executes approved actions through adapter-based tooling",
-        "status": "active",
-        "layer": 6,
-        "key_functions": ["Executes approved actions", "Adapter-based tooling", "No scope expansion"]
-    },
-    {
-        "id": "audit",
-        "name": "AUDIT & EVENT LEDGER",
-        "description": "Immutable, Append-Only Truth Record - Records decisions, routing, enforcement, execution",
-        "status": "active",
-        "layer": 7,
-        "key_functions": ["Immutable records", "Decision logging", "Routing logs", "Enforcement logs", "Execution logs"]
+async def require_editor(request: Request) -> User:
+    """Require editor or admin role"""
+    user = await require_auth(request)
+    if user.role not in ["admin", "editor"]:
+        raise HTTPException(status_code=403, detail="Editor or admin role required")
+    return user
+
+async def require_admin(request: Request) -> User:
+    """Require admin role"""
+    user = await require_auth(request)
+    if user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin role required")
+    return user
+
+# ============== Audit & Version Helpers ==============
+
+async def log_audit(user: User, action: str, content_type: str, content_id: str, content_title: str, details: dict = {}):
+    """Log an audit entry"""
+    entry = AuditLogEntry(
+        user_id=user.user_id,
+        user_name=user.name,
+        user_email=user.email,
+        action=action,
+        content_type=content_type,
+        content_id=content_id,
+        content_title=content_title,
+        details=details
+    )
+    doc = entry.model_dump()
+    doc["timestamp"] = doc["timestamp"].isoformat()
+    await db.audit_log.insert_one(doc)
+
+async def save_version(user: User, content_type: str, content_id: str, data: dict, change_type: str, change_summary: str):
+    """Save a version snapshot"""
+    version = ContentVersion(
+        content_id=content_id,
+        content_type=content_type,
+        data=data,
+        changed_by=user.user_id,
+        changed_by_name=user.name,
+        change_type=change_type,
+        change_summary=change_summary
+    )
+    doc = version.model_dump()
+    doc["timestamp"] = doc["timestamp"].isoformat()
+    await db.content_versions.insert_one(doc)
+
+# ============== Auth Routes ==============
+
+@api_router.post("/auth/session")
+async def create_session(request: Request, response: Response):
+    """Exchange session_id for session_token"""
+    body = await request.json()
+    session_id = body.get("session_id")
+    
+    if not session_id:
+        raise HTTPException(status_code=400, detail="session_id required")
+    
+    # Call Emergent Auth to get user data
+    async with httpx.AsyncClient() as client:
+        auth_response = await client.get(
+            "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data",
+            headers={"X-Session-ID": session_id}
+        )
+    
+    if auth_response.status_code != 200:
+        raise HTTPException(status_code=401, detail="Invalid session_id")
+    
+    user_data = auth_response.json()
+    
+    # Check if user exists
+    existing_user = await db.users.find_one({"email": user_data["email"]}, {"_id": 0})
+    
+    if existing_user:
+        user_id = existing_user["user_id"]
+        # Update user data
+        await db.users.update_one(
+            {"user_id": user_id},
+            {"$set": {"name": user_data["name"], "picture": user_data.get("picture")}}
+        )
+        role = existing_user.get("role", "viewer")
+    else:
+        # Create new user
+        user_id = f"user_{uuid.uuid4().hex[:12]}"
+        # First user becomes admin
+        user_count = await db.users.count_documents({})
+        role = "admin" if user_count == 0 else "viewer"
+        
+        new_user = {
+            "user_id": user_id,
+            "email": user_data["email"],
+            "name": user_data["name"],
+            "picture": user_data.get("picture"),
+            "role": role,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.users.insert_one(new_user)
+    
+    # Create session
+    session_token = user_data.get("session_token") or f"session_{uuid.uuid4().hex}"
+    expires_at = datetime.now(timezone.utc) + timedelta(days=7)
+    
+    await db.user_sessions.delete_many({"user_id": user_id})
+    await db.user_sessions.insert_one({
+        "user_id": user_id,
+        "session_token": session_token,
+        "expires_at": expires_at.isoformat(),
+        "created_at": datetime.now(timezone.utc).isoformat()
+    })
+    
+    # Set cookie
+    response.set_cookie(
+        key="session_token",
+        value=session_token,
+        httponly=True,
+        secure=True,
+        samesite="none",
+        path="/",
+        max_age=7 * 24 * 60 * 60
+    )
+    
+    # Log audit
+    user = User(user_id=user_id, email=user_data["email"], name=user_data["name"], role=role)
+    await log_audit(user, "login", "auth", user_id, user_data["name"])
+    
+    return {
+        "user_id": user_id,
+        "email": user_data["email"],
+        "name": user_data["name"],
+        "picture": user_data.get("picture"),
+        "role": role
     }
-]
 
-# ============== Document Metadata ==============
+@api_router.get("/auth/me")
+async def get_me(request: Request):
+    """Get current user"""
+    user = await get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    return {
+        "user_id": user.user_id,
+        "email": user.email,
+        "name": user.name,
+        "picture": user.picture,
+        "role": user.role
+    }
 
-DOCUMENT_METADATA = [
-    {"filename": "69ad3608-fba2-48f0-98a5-60166202e9a1_7.1_garvis_full_stack__one-page_architecture_diagram.pdf", "title": "GARVIS Full Stack Architecture Diagram", "category": "Architecture", "description": "One-page architectural reference showing authority flow across all system components."},
-    {"filename": "c4205f70-436c-47f4-85e1-a7a6e76ece8f_0.2_canonical_glossary__garvis_full_stack.pdf", "title": "Canonical Glossary", "category": "Reference", "description": "Official terminology and definitions for the GARVIS Full Stack system."},
-    {"filename": "1dc7cd15-1039-4f63-a76a-cf60ffec7cc7_0.1_pearl__pig__canonical_dictionary__language_authority.pdf", "title": "Pearl & Pig Canonical Dictionary", "category": "Reference", "description": "Language authority and canonical dictionary for the Pearl & Pig ecosystem."},
-    {"filename": "ee7437e6-b48a-40f8-a0d0-11752acb44fc_2.1_garvis__executive_creative__systems_brief.pdf", "title": "GARVIS Executive Systems Brief", "category": "GARVIS", "description": "Executive overview of the GARVIS sovereign intelligence system."},
-    {"filename": "e23081a9-13a5-41c3-858f-2c55b64e6c6c_2.2_garvis__telauthorium__enforcement_contract__engineering_specification.pdf", "title": "GARVIS Telauthorium Enforcement Contract", "category": "GARVIS", "description": "Engineering specification for enforcement contracts between GARVIS and Telauthorium."},
-    {"filename": "db8a2ffb-7435-4430-99d6-cc08b46eae6c_Telauthorium__Executive_Creative__Systems_Brief.pdf", "title": "Telauthorium Executive Systems Brief", "category": "Telauthorium", "description": "Executive overview of the Telauthorium rights and provenance registry."},
-    {"filename": "ec618a24-4ab4-4290-b91d-37d78dd49ce1_1.2_telauthorium_id_registry__master_list.pdf", "title": "Telauthorium ID Registry Master List", "category": "Telauthorium", "description": "Master list of all Telauthorium identifiers and registrations."},
-    {"filename": "4493d418-50d1-4ded-865d-f89f1c4633db_1.3_unified_identity__object_model__canonical_specification.pdf", "title": "Unified Identity Object Model", "category": "Identity", "description": "Canonical specification for the unified identity object model."},
-    {"filename": "9c06e3db-b6b8-4cbc-93f3-e9bb0af84fc2_Flightpath_COS__Executive_Creative__Systems_Brief.pdf", "title": "Flightpath COS Executive Brief", "category": "Flightpath", "description": "Executive overview of the Flightpath Creative Operating System."},
-    {"filename": "96812e9e-894f-4e0c-a0f5-168e06f77659_4.2_flightpath_cos__state_machine__proof_gates.pdf", "title": "Flightpath COS State Machine & Proof Gates", "category": "Flightpath", "description": "State machine and proof gate specifications for Flightpath COS."},
-    {"filename": "61852e42-7072-4c17-a832-1dd2f7a00dae_4.3_mose__executive_creative__systems_brief.pdf", "title": "MOSE Executive Systems Brief", "category": "MOSE", "description": "Executive overview of the Multi-Operator Systems Engine."},
-    {"filename": "acb17996-d940-427c-bd36-3b7492ac684c_4.4_mose__routing__escalation_logic_specification.pdf", "title": "MOSE Routing & Escalation Logic", "category": "MOSE", "description": "Specification for MOSE routing and escalation logic."},
-    {"filename": "befedcb2-53da-4314-9c0a-268ce42d7e25_5.2_tela__executive__systems_brief.pdf", "title": "TELA Executive Systems Brief", "category": "TELA", "description": "Executive overview of the Trusted Efficiency Liaison Assistant."},
-    {"filename": "3f6b84bc-8205-406a-9c69-6cd72a3fcd68_5.3_tela__action_catalog__adapter_specification.pdf", "title": "TELA Action Catalog & Adapter Specification", "category": "TELA", "description": "Action catalog and adapter specifications for TELA execution."},
-    {"filename": "c09913ec-293e-40fb-8540-1d75cefe0536_3.1_pig_pen__canonical_operator_registry_(telauthorium-locked).pdf", "title": "Pig Pen Canonical Operator Registry", "category": "Pig Pen", "description": "Telauthorium-locked registry of non-human cognition operators."},
-    {"filename": "e56f70ad-6274-46db-8476-84cb3d698e88_5.1_audit__event_ledger__canonical_specification.pdf", "title": "Audit Event Ledger Specification", "category": "Audit", "description": "Canonical specification for the immutable audit and event ledger."},
-    {"filename": "d9a9a288-5bc2-4dbb-8da8-d76f2a343947_6.1_ecos__tenant-safe_executive__systems_brief__license_bundles.pdf", "title": "ECOS Tenant-Safe Executive Brief", "category": "ECOS", "description": "Executive overview of ECOS tenant deployments and license bundles."},
-    {"filename": "1df31a37-5a36-4191-b029-36d18dcf381f_Failure_Halt__Re-Authorization_Protocol.pdf", "title": "Failure Halt & Re-Authorization Protocol", "category": "Enforcement", "description": "Protocol for handling system failures, halts, and re-authorization."},
-]
+@api_router.post("/auth/logout")
+async def logout(request: Request, response: Response):
+    """Logout user"""
+    user = await get_current_user(request)
+    if user:
+        await db.user_sessions.delete_many({"user_id": user.user_id})
+        await log_audit(user, "logout", "auth", user.user_id, user.name)
+    
+    response.delete_cookie(key="session_token", path="/")
+    return {"message": "Logged out"}
 
-# ============== Routes ==============
+# ============== User Management Routes (Admin) ==============
 
-@api_router.get("/")
-async def root():
-    return {"message": "GoGarvis API", "version": "1.0.0"}
+@api_router.get("/admin/users")
+async def list_users(request: Request):
+    """List all users (admin only)"""
+    await require_admin(request)
+    users = await db.users.find({}, {"_id": 0}).to_list(1000)
+    return {"users": users}
 
-@api_router.get("/health")
-async def health_check():
-    return {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}
+@api_router.put("/admin/users/{user_id}/role")
+async def update_user_role(user_id: str, role_update: RoleUpdate, request: Request):
+    """Update user role (admin only)"""
+    admin = await require_admin(request)
+    
+    if role_update.role not in ["admin", "editor", "viewer"]:
+        raise HTTPException(status_code=400, detail="Invalid role")
+    
+    user = await db.users.find_one({"user_id": user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    old_role = user.get("role", "viewer")
+    await db.users.update_one({"user_id": user_id}, {"$set": {"role": role_update.role}})
+    
+    await log_audit(admin, "update", "user", user_id, user["name"], {"old_role": old_role, "new_role": role_update.role})
+    
+    return {"message": "Role updated", "user_id": user_id, "role": role_update.role}
 
-# Status endpoints
-@api_router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
-    status_dict = input.model_dump()
-    status_obj = StatusCheck(**status_dict)
-    doc = status_obj.model_dump()
-    doc['timestamp'] = doc['timestamp'].isoformat()
-    _ = await db.status_checks.insert_one(doc)
-    return status_obj
+# ============== Audit Log Routes ==============
 
-@api_router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
-    status_checks = await db.status_checks.find({}, {"_id": 0}).to_list(1000)
-    for check in status_checks:
-        if isinstance(check['timestamp'], str):
-            check['timestamp'] = datetime.fromisoformat(check['timestamp'])
-    return status_checks
+@api_router.get("/audit-log")
+async def get_audit_log(
+    request: Request,
+    content_type: Optional[str] = None,
+    user_id: Optional[str] = None,
+    limit: int = 100
+):
+    """Get audit log entries"""
+    await require_auth(request)
+    
+    query = {}
+    if content_type:
+        query["content_type"] = content_type
+    if user_id:
+        query["user_id"] = user_id
+    
+    entries = await db.audit_log.find(query, {"_id": 0}).sort("timestamp", -1).to_list(limit)
+    return {"entries": entries, "total": len(entries)}
 
-# Documents endpoints
+# ============== Version History Routes ==============
+
+@api_router.get("/versions/{content_type}/{content_id}")
+async def get_versions(content_type: str, content_id: str, request: Request):
+    """Get version history for content"""
+    await require_auth(request)
+    
+    versions = await db.content_versions.find(
+        {"content_type": content_type, "content_id": content_id},
+        {"_id": 0}
+    ).sort("timestamp", -1).to_list(100)
+    
+    return {"versions": versions}
+
+@api_router.post("/versions/{content_type}/{content_id}/rollback/{version_id}")
+async def rollback_version(content_type: str, content_id: str, version_id: str, request: Request):
+    """Rollback to a specific version"""
+    user = await require_editor(request)
+    
+    version = await db.content_versions.find_one(
+        {"version_id": version_id, "content_type": content_type, "content_id": content_id},
+        {"_id": 0}
+    )
+    
+    if not version:
+        raise HTTPException(status_code=404, detail="Version not found")
+    
+    # Get collection name
+    collection_map = {
+        "document": "documents",
+        "glossary": "glossary_terms",
+        "component": "components",
+        "pigpen": "pigpen_operators",
+        "brand": "brand_profiles"
+    }
+    
+    collection_name = collection_map.get(content_type)
+    if not collection_name:
+        raise HTTPException(status_code=400, detail="Invalid content type")
+    
+    # Get current state before rollback
+    id_field = f"{content_type}_id" if content_type != "document" else "doc_id"
+    current = await db[collection_name].find_one({id_field: content_id}, {"_id": 0})
+    
+    # Save current state as a version
+    if current:
+        await save_version(user, content_type, content_id, current, "rollback", f"State before rollback to {version_id[:8]}")
+    
+    # Apply rollback
+    rollback_data = version["data"].copy()
+    rollback_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    await db[collection_name].update_one({id_field: content_id}, {"$set": rollback_data})
+    
+    # Save rollback version
+    await save_version(user, content_type, content_id, rollback_data, "rollback", f"Rolled back to version {version_id[:8]}")
+    
+    # Log audit
+    await log_audit(user, "rollback", content_type, content_id, rollback_data.get("title") or rollback_data.get("name") or rollback_data.get("term", "Unknown"), {"version_id": version_id})
+    
+    return {"message": "Rollback successful", "version_id": version_id}
+
+# ============== Document Routes ==============
+
 @api_router.get("/documents")
 async def get_documents(category: Optional[str] = None, search: Optional[str] = None):
-    documents = DOCUMENT_METADATA.copy()
+    documents = await db.documents.find({"is_active": True}, {"_id": 0}).to_list(1000)
     
     if category and category != "all":
-        documents = [d for d in documents if d["category"].lower() == category.lower()]
+        documents = [d for d in documents if d.get("category", "").lower() == category.lower()]
     
     if search:
         search_lower = search.lower()
-        documents = [d for d in documents if search_lower in d["title"].lower() or search_lower in d["description"].lower()]
+        documents = [d for d in documents if search_lower in d.get("title", "").lower() or search_lower in d.get("description", "").lower()]
     
     return {"documents": documents, "total": len(documents)}
 
-@api_router.get("/documents/{filename}")
-async def get_document_content(filename: str):
-    # Find document metadata
-    doc_meta = next((d for d in DOCUMENT_METADATA if d["filename"] == filename), None)
-    if not doc_meta:
+@api_router.get("/documents/{doc_id}")
+async def get_document(doc_id: str):
+    doc = await db.documents.find_one({"doc_id": doc_id, "is_active": True}, {"_id": 0})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+    return doc
+
+@api_router.post("/documents")
+async def create_document(doc: DocumentCreate, request: Request):
+    user = await require_editor(request)
+    
+    new_doc = Document(**doc.model_dump())
+    doc_dict = new_doc.model_dump()
+    doc_dict["created_at"] = doc_dict["created_at"].isoformat()
+    doc_dict["updated_at"] = doc_dict["updated_at"].isoformat()
+    
+    await db.documents.insert_one(doc_dict)
+    await save_version(user, "document", new_doc.doc_id, doc_dict, "create", f"Created document: {doc.title}")
+    await log_audit(user, "create", "document", new_doc.doc_id, doc.title)
+    
+    return {"message": "Document created", "doc_id": new_doc.doc_id}
+
+@api_router.put("/documents/{doc_id}")
+async def update_document(doc_id: str, update: DocumentUpdate, request: Request):
+    user = await require_editor(request)
+    
+    doc = await db.documents.find_one({"doc_id": doc_id}, {"_id": 0})
+    if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
     
-    # Try to extract text from PDF
-    pdf_path = DOCS_PATH / filename
-    if not pdf_path.exists():
-        raise HTTPException(status_code=404, detail="PDF file not found")
+    # Save current version
+    await save_version(user, "document", doc_id, doc, "update", f"Before update: {doc.get('title')}")
     
-    try:
-        content = ""
-        with open(pdf_path, 'rb') as file:
-            reader = PyPDF2.PdfReader(file)
-            for page in reader.pages:
-                text = page.extract_text()
-                if text:
-                    content += text + "\n\n"
-        
-        return {
-            **doc_meta,
-            "content": content if content else "Content could not be extracted from this PDF."
-        }
-    except Exception as e:
-        logger.error(f"Error reading PDF: {e}")
-        return {
-            **doc_meta,
-            "content": f"Error extracting content: {str(e)}"
-        }
+    update_data = {k: v for k, v in update.model_dump().items() if v is not None}
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    await db.documents.update_one({"doc_id": doc_id}, {"$set": update_data})
+    
+    # Get updated doc for version
+    updated_doc = await db.documents.find_one({"doc_id": doc_id}, {"_id": 0})
+    await save_version(user, "document", doc_id, updated_doc, "update", f"Updated document: {updated_doc.get('title')}")
+    await log_audit(user, "update", "document", doc_id, updated_doc.get("title"), {"changes": list(update_data.keys())})
+    
+    return {"message": "Document updated", "doc_id": doc_id}
+
+@api_router.delete("/documents/{doc_id}")
+async def delete_document(doc_id: str, request: Request):
+    user = await require_editor(request)
+    
+    doc = await db.documents.find_one({"doc_id": doc_id}, {"_id": 0})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+    
+    await save_version(user, "document", doc_id, doc, "delete", f"Deleted document: {doc.get('title')}")
+    await db.documents.update_one({"doc_id": doc_id}, {"$set": {"is_active": False}})
+    await log_audit(user, "delete", "document", doc_id, doc.get("title"))
+    
+    return {"message": "Document deleted", "doc_id": doc_id}
 
 @api_router.get("/documents/categories/list")
 async def get_document_categories():
-    categories = list(set(d["category"] for d in DOCUMENT_METADATA))
+    documents = await db.documents.find({"is_active": True}, {"_id": 0, "category": 1}).to_list(1000)
+    categories = list(set(d.get("category") for d in documents if d.get("category")))
     return {"categories": sorted(categories)}
 
-# Glossary endpoints
+# ============== Glossary Routes ==============
+
 @api_router.get("/glossary")
 async def get_glossary(category: Optional[str] = None, search: Optional[str] = None):
-    terms = GLOSSARY_DATA.copy()
+    terms = await db.glossary_terms.find({"is_active": True}, {"_id": 0}).to_list(1000)
     
     if category and category != "all":
-        terms = [t for t in terms if t["category"].lower() == category.lower()]
+        terms = [t for t in terms if t.get("category", "").lower() == category.lower()]
     
     if search:
         search_lower = search.lower()
-        terms = [t for t in terms if search_lower in t["term"].lower() or search_lower in t["definition"].lower()]
+        terms = [t for t in terms if search_lower in t.get("term", "").lower() or search_lower in t.get("definition", "").lower()]
     
     return {"terms": terms, "total": len(terms)}
 
+@api_router.post("/glossary")
+async def create_glossary_term(term: GlossaryTermCreate, request: Request):
+    user = await require_editor(request)
+    
+    new_term = GlossaryTerm(**term.model_dump())
+    term_dict = new_term.model_dump()
+    term_dict["created_at"] = term_dict["created_at"].isoformat()
+    term_dict["updated_at"] = term_dict["updated_at"].isoformat()
+    
+    await db.glossary_terms.insert_one(term_dict)
+    await save_version(user, "glossary", new_term.term_id, term_dict, "create", f"Created term: {term.term}")
+    await log_audit(user, "create", "glossary", new_term.term_id, term.term)
+    
+    return {"message": "Term created", "term_id": new_term.term_id}
+
+@api_router.put("/glossary/{term_id}")
+async def update_glossary_term(term_id: str, update: GlossaryTermUpdate, request: Request):
+    user = await require_editor(request)
+    
+    term = await db.glossary_terms.find_one({"term_id": term_id}, {"_id": 0})
+    if not term:
+        raise HTTPException(status_code=404, detail="Term not found")
+    
+    await save_version(user, "glossary", term_id, term, "update", f"Before update: {term.get('term')}")
+    
+    update_data = {k: v for k, v in update.model_dump().items() if v is not None}
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    await db.glossary_terms.update_one({"term_id": term_id}, {"$set": update_data})
+    
+    updated_term = await db.glossary_terms.find_one({"term_id": term_id}, {"_id": 0})
+    await save_version(user, "glossary", term_id, updated_term, "update", f"Updated term: {updated_term.get('term')}")
+    await log_audit(user, "update", "glossary", term_id, updated_term.get("term"), {"changes": list(update_data.keys())})
+    
+    return {"message": "Term updated", "term_id": term_id}
+
+@api_router.delete("/glossary/{term_id}")
+async def delete_glossary_term(term_id: str, request: Request):
+    user = await require_editor(request)
+    
+    term = await db.glossary_terms.find_one({"term_id": term_id}, {"_id": 0})
+    if not term:
+        raise HTTPException(status_code=404, detail="Term not found")
+    
+    await save_version(user, "glossary", term_id, term, "delete", f"Deleted term: {term.get('term')}")
+    await db.glossary_terms.update_one({"term_id": term_id}, {"$set": {"is_active": False}})
+    await log_audit(user, "delete", "glossary", term_id, term.get("term"))
+    
+    return {"message": "Term deleted", "term_id": term_id}
+
 @api_router.get("/glossary/categories")
 async def get_glossary_categories():
-    categories = list(set(t["category"] for t in GLOSSARY_DATA))
+    terms = await db.glossary_terms.find({"is_active": True}, {"_id": 0, "category": 1}).to_list(1000)
+    categories = list(set(t.get("category") for t in terms if t.get("category")))
     return {"categories": sorted(categories)}
 
-# Architecture endpoints
-@api_router.get("/architecture/components")
-async def get_architecture_components():
-    return {"components": SYSTEM_COMPONENTS}
+# ============== Architecture Components Routes ==============
 
-@api_router.get("/architecture/components/{component_id}")
-async def get_component_detail(component_id: str):
-    component = next((c for c in SYSTEM_COMPONENTS if c["id"] == component_id), None)
+@api_router.get("/architecture/components")
+async def get_components():
+    components = await db.components.find({"is_active": True}, {"_id": 0}).sort("layer", 1).to_list(100)
+    return {"components": components}
+
+@api_router.put("/architecture/components/{component_id}")
+async def update_component(component_id: str, update: ComponentUpdate, request: Request):
+    user = await require_editor(request)
+    
+    component = await db.components.find_one({"component_id": component_id}, {"_id": 0})
     if not component:
         raise HTTPException(status_code=404, detail="Component not found")
-    return component
+    
+    await save_version(user, "component", component_id, component, "update", f"Before update: {component.get('name')}")
+    
+    update_data = {k: v for k, v in update.model_dump().items() if v is not None}
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    await db.components.update_one({"component_id": component_id}, {"$set": update_data})
+    
+    updated_component = await db.components.find_one({"component_id": component_id}, {"_id": 0})
+    await save_version(user, "component", component_id, updated_component, "update", f"Updated component: {updated_component.get('name')}")
+    await log_audit(user, "update", "component", component_id, updated_component.get("name"), {"changes": list(update_data.keys())})
+    
+    return {"message": "Component updated", "component_id": component_id}
 
-# Chat endpoints
+# ============== Pig Pen Operators Routes ==============
+
+@api_router.get("/pigpen")
+async def get_pigpen_operators(category: Optional[str] = None):
+    query = {"is_active": True}
+    if category and category != "all":
+        query["category"] = category
+    
+    operators = await db.pigpen_operators.find(query, {"_id": 0}).to_list(100)
+    return {"operators": operators, "total": len(operators)}
+
+@api_router.get("/pigpen/{operator_id}")
+async def get_pigpen_operator(operator_id: str):
+    operator = await db.pigpen_operators.find_one({"operator_id": operator_id, "is_active": True}, {"_id": 0})
+    if not operator:
+        raise HTTPException(status_code=404, detail="Operator not found")
+    return operator
+
+@api_router.post("/pigpen")
+async def create_pigpen_operator(operator: PigPenOperatorCreate, request: Request):
+    user = await require_editor(request)
+    
+    new_operator = PigPenOperator(**operator.model_dump())
+    op_dict = new_operator.model_dump()
+    op_dict["created_at"] = op_dict["created_at"].isoformat()
+    op_dict["updated_at"] = op_dict["updated_at"].isoformat()
+    
+    await db.pigpen_operators.insert_one(op_dict)
+    await save_version(user, "pigpen", new_operator.operator_id, op_dict, "create", f"Created operator: {operator.name}")
+    await log_audit(user, "create", "pigpen", new_operator.operator_id, operator.name)
+    
+    return {"message": "Operator created", "operator_id": new_operator.operator_id}
+
+@api_router.put("/pigpen/{operator_id}")
+async def update_pigpen_operator(operator_id: str, update: PigPenOperatorUpdate, request: Request):
+    user = await require_editor(request)
+    
+    operator = await db.pigpen_operators.find_one({"operator_id": operator_id}, {"_id": 0})
+    if not operator:
+        raise HTTPException(status_code=404, detail="Operator not found")
+    
+    await save_version(user, "pigpen", operator_id, operator, "update", f"Before update: {operator.get('name')}")
+    
+    update_data = {k: v for k, v in update.model_dump().items() if v is not None}
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    await db.pigpen_operators.update_one({"operator_id": operator_id}, {"$set": update_data})
+    
+    updated_op = await db.pigpen_operators.find_one({"operator_id": operator_id}, {"_id": 0})
+    await save_version(user, "pigpen", operator_id, updated_op, "update", f"Updated operator: {updated_op.get('name')}")
+    await log_audit(user, "update", "pigpen", operator_id, updated_op.get("name"), {"changes": list(update_data.keys())})
+    
+    return {"message": "Operator updated", "operator_id": operator_id}
+
+@api_router.delete("/pigpen/{operator_id}")
+async def delete_pigpen_operator(operator_id: str, request: Request):
+    user = await require_editor(request)
+    
+    operator = await db.pigpen_operators.find_one({"operator_id": operator_id}, {"_id": 0})
+    if not operator:
+        raise HTTPException(status_code=404, detail="Operator not found")
+    
+    await save_version(user, "pigpen", operator_id, operator, "delete", f"Deleted operator: {operator.get('name')}")
+    await db.pigpen_operators.update_one({"operator_id": operator_id}, {"$set": {"is_active": False}})
+    await log_audit(user, "delete", "pigpen", operator_id, operator.get("name"))
+    
+    return {"message": "Operator deleted", "operator_id": operator_id}
+
+@api_router.get("/pigpen/categories/list")
+async def get_pigpen_categories():
+    operators = await db.pigpen_operators.find({"is_active": True}, {"_id": 0, "category": 1}).to_list(100)
+    categories = list(set(o.get("category") for o in operators if o.get("category")))
+    return {"categories": sorted(categories)}
+
+# ============== Brand Profiles Routes ==============
+
+@api_router.get("/brands")
+async def get_brand_profiles():
+    brands = await db.brand_profiles.find({"is_active": True}, {"_id": 0}).to_list(100)
+    return {"brands": brands, "total": len(brands)}
+
+@api_router.get("/brands/{brand_id}")
+async def get_brand_profile(brand_id: str):
+    brand = await db.brand_profiles.find_one({"brand_id": brand_id, "is_active": True}, {"_id": 0})
+    if not brand:
+        raise HTTPException(status_code=404, detail="Brand not found")
+    return brand
+
+@api_router.post("/brands")
+async def create_brand_profile(brand: BrandProfileCreate, request: Request):
+    user = await require_editor(request)
+    
+    new_brand = BrandProfile(**brand.model_dump())
+    brand_dict = new_brand.model_dump()
+    brand_dict["created_at"] = brand_dict["created_at"].isoformat()
+    brand_dict["updated_at"] = brand_dict["updated_at"].isoformat()
+    
+    await db.brand_profiles.insert_one(brand_dict)
+    await save_version(user, "brand", new_brand.brand_id, brand_dict, "create", f"Created brand: {brand.name}")
+    await log_audit(user, "create", "brand", new_brand.brand_id, brand.name)
+    
+    return {"message": "Brand created", "brand_id": new_brand.brand_id}
+
+@api_router.put("/brands/{brand_id}")
+async def update_brand_profile(brand_id: str, update: BrandProfileUpdate, request: Request):
+    user = await require_editor(request)
+    
+    brand = await db.brand_profiles.find_one({"brand_id": brand_id}, {"_id": 0})
+    if not brand:
+        raise HTTPException(status_code=404, detail="Brand not found")
+    
+    await save_version(user, "brand", brand_id, brand, "update", f"Before update: {brand.get('name')}")
+    
+    update_data = {k: v for k, v in update.model_dump().items() if v is not None}
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    await db.brand_profiles.update_one({"brand_id": brand_id}, {"$set": update_data})
+    
+    updated_brand = await db.brand_profiles.find_one({"brand_id": brand_id}, {"_id": 0})
+    await save_version(user, "brand", brand_id, updated_brand, "update", f"Updated brand: {updated_brand.get('name')}")
+    await log_audit(user, "update", "brand", brand_id, updated_brand.get("name"), {"changes": list(update_data.keys())})
+    
+    return {"message": "Brand updated", "brand_id": brand_id}
+
+@api_router.delete("/brands/{brand_id}")
+async def delete_brand_profile(brand_id: str, request: Request):
+    user = await require_editor(request)
+    
+    brand = await db.brand_profiles.find_one({"brand_id": brand_id}, {"_id": 0})
+    if not brand:
+        raise HTTPException(status_code=404, detail="Brand not found")
+    
+    await save_version(user, "brand", brand_id, brand, "delete", f"Deleted brand: {brand.get('name')}")
+    await db.brand_profiles.update_one({"brand_id": brand_id}, {"$set": {"is_active": False}})
+    await log_audit(user, "delete", "brand", brand_id, brand.get("name"))
+    
+    return {"message": "Brand deleted", "brand_id": brand_id}
+
+# ============== Chat Routes ==============
+
 SYSTEM_MESSAGE = """You are GARVIS AI, the sovereign intelligence assistant for the GoGarvis Full Stack architecture. You are knowledgeable about:
 
 **Core Systems:**
@@ -351,10 +866,9 @@ No component below can override one above. Execution only happens at TELA.
 You provide authoritative answers about the system architecture, help users understand concepts, and guide them through the documentation. Respond in a professional, precise manner befitting a sovereign intelligence system."""
 
 @api_router.post("/chat", response_model=ChatResponse)
-async def chat_with_garvis(request: ChatRequest):
-    session_id = request.session_id or str(uuid.uuid4())
+async def chat_with_garvis(request_body: ChatRequest):
+    session_id = request_body.session_id or str(uuid.uuid4())
     
-    # Get or create chat session
     if session_id not in chat_sessions:
         api_key = os.environ.get('EMERGENT_LLM_KEY')
         if not api_key:
@@ -371,15 +885,13 @@ async def chat_with_garvis(request: ChatRequest):
     chat = chat_sessions[session_id]
     
     try:
-        # Send message and get response
-        user_message = UserMessage(text=request.message)
+        user_message = UserMessage(text=request_body.message)
         response = await chat.send_message(user_message)
         
-        # Store in database
         await db.chat_history.insert_one({
             "session_id": session_id,
             "role": "user",
-            "content": request.message,
+            "content": request_body.message,
             "timestamp": datetime.now(timezone.utc).isoformat()
         })
         await db.chat_history.insert_one({
@@ -396,10 +908,7 @@ async def chat_with_garvis(request: ChatRequest):
 
 @api_router.get("/chat/history/{session_id}")
 async def get_chat_history(session_id: str):
-    messages = await db.chat_history.find(
-        {"session_id": session_id},
-        {"_id": 0}
-    ).sort("timestamp", 1).to_list(100)
+    messages = await db.chat_history.find({"session_id": session_id}, {"_id": 0}).sort("timestamp", 1).to_list(100)
     return {"messages": messages, "session_id": session_id}
 
 @api_router.delete("/chat/session/{session_id}")
@@ -409,21 +918,38 @@ async def clear_chat_session(session_id: str):
     await db.chat_history.delete_many({"session_id": session_id})
     return {"message": "Session cleared", "session_id": session_id}
 
-# Dashboard stats
+# ============== Dashboard Stats ==============
+
 @api_router.get("/dashboard/stats")
 async def get_dashboard_stats():
+    doc_count = await db.documents.count_documents({"is_active": True})
+    term_count = await db.glossary_terms.count_documents({"is_active": True})
+    component_count = await db.components.count_documents({"is_active": True})
+    operator_count = await db.pigpen_operators.count_documents({"is_active": True})
+    brand_count = await db.brand_profiles.count_documents({"is_active": True})
+    
     return {
-        "total_documents": len(DOCUMENT_METADATA),
-        "total_glossary_terms": len(GLOSSARY_DATA),
-        "total_components": len(SYSTEM_COMPONENTS),
-        "active_components": len([c for c in SYSTEM_COMPONENTS if c["status"] == "active"]),
-        "document_categories": len(set(d["category"] for d in DOCUMENT_METADATA)),
-        "glossary_categories": len(set(t["category"] for t in GLOSSARY_DATA)),
+        "total_documents": doc_count,
+        "total_glossary_terms": term_count,
+        "total_components": component_count,
+        "total_pigpen_operators": operator_count,
+        "total_brand_profiles": brand_count,
+        "active_components": component_count,
         "system_status": "OPERATIONAL",
         "authority_chain": "INTACT"
     }
 
-# Include the router in the main app
+# ============== Health & Root ==============
+
+@api_router.get("/")
+async def root():
+    return {"message": "GoGarvis API", "version": "2.0.0"}
+
+@api_router.get("/health")
+async def health_check():
+    return {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}
+
+# Include router
 app.include_router(api_router)
 
 app.add_middleware(
@@ -434,11 +960,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 @app.on_event("shutdown")
