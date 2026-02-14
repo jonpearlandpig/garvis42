@@ -28,8 +28,13 @@ app = FastAPI(title="GoGarvis API")
 api_router = APIRouter(prefix="/api")
 
 # LLM Integration
-from emergentintegrations.llm.chat import LlmChat, UserMessage
+from emergentintegrations.llm.chat import LlmChat, UserMessage, ImageContent
 chat_sessions = {}
+
+# File upload storage
+UPLOAD_DIR = Path("/app/uploads")
+UPLOAD_DIR.mkdir(exist_ok=True)
+MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
 
 DOCS_PATH = Path("/app/docs/specs")
 
