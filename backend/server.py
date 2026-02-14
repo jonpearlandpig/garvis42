@@ -917,6 +917,139 @@ No component below can override one above. Execution only happens at TELA.
 
 You provide authoritative answers about the system architecture, help users understand concepts, and guide them through the documentation. Respond in a professional, precise manner befitting a sovereign intelligence system."""
 
+# ============== File Upload Helpers ==============
+
+def extract_text_from_pdf(file_content: bytes) -> str:
+    """Extract text from PDF file"""
+    try:
+        pdf_reader = PyPDF2.PdfReader(io.BytesIO(file_content))
+        text = ""
+        for page in pdf_reader.pages:
+            text += page.extract_text() or ""
+        return text.strip()
+    except Exception as e:
+        logger.error(f"PDF extraction error: {e}")
+        return ""
+
+def extract_text_from_file(file_content: bytes, filename: str) -> str:
+    """Extract text from text-based files"""
+    try:
+        if filename.lower().endswith('.pdf'):
+            return extract_text_from_pdf(file_content)
+        elif filename.lower().endswith(('.txt', '.md')):
+            return file_content.decode('utf-8', errors='ignore')
+        return ""
+    except Exception as e:
+        logger.error(f"Text extraction error: {e}")
+        return ""
+
+def get_mime_type(filename: str) -> str:
+    """Get MIME type from filename"""
+    ext = filename.lower().split('.')[-1]
+    mime_types = {
+        'png': 'image/png',
+        'jpg': 'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'webp': 'image/webp',
+        'pdf': 'application/pdf',
+        'txt': 'text/plain',
+        'md': 'text/markdown'
+    }
+    return mime_types.get(ext, 'application/octet-stream')
+
+def is_image_file(filename: str) -> bool:
+    """Check if file is an image"""
+    return filename.lower().endswith(('.png', '.jpg', '.jpeg', '.webp'))
+
+# ============== File Upload Routes ==============
+
+@api_router.post("/chat/upload", response_model=List[FileUploadResponse])
+async def upload_files(files: List[UploadFile] = File(...)):
+    """Upload multiple files for chat context"""
+    results = []
+    
+    for file in files:
+        # Validate file extension
+        allowed_extensions = ('.png', '.jpg', '.jpeg', '.webp', '.pdf', '.txt', '.md')
+        if not file.filename.lower().endswith(allowed_extensions):
+            raise HTTPException(
+                status_code=400, 
+                detail=f"File type not allowed: {file.filename}. Allowed: {allowed_extensions}"
+            )
+        
+        # Read file content
+        content = await file.read()
+        
+        # Validate file size
+        if len(content) > MAX_FILE_SIZE:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"File too large: {file.filename}. Max size: 50MB"
+            )
+        
+        # Generate file ID and save
+        file_id = str(uuid.uuid4())
+        file_path = UPLOAD_DIR / f"{file_id}_{file.filename}"
+        
+        with open(file_path, 'wb') as f:
+            f.write(content)
+        
+        # Extract text for documents
+        extracted_text = None
+        if not is_image_file(file.filename):
+            extracted_text = extract_text_from_file(content, file.filename)
+            if extracted_text and len(extracted_text) > 10000:
+                extracted_text = extracted_text[:10000] + "... [truncated]"
+        
+        # Store file metadata in DB
+        file_doc = {
+            "file_id": file_id,
+            "filename": file.filename,
+            "file_type": get_mime_type(file.filename),
+            "size": len(content),
+            "path": str(file_path),
+            "is_image": is_image_file(file.filename),
+            "extracted_text": extracted_text,
+            "uploaded_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.chat_files.insert_one(file_doc)
+        
+        results.append(FileUploadResponse(
+            file_id=file_id,
+            filename=file.filename,
+            file_type=get_mime_type(file.filename),
+            size=len(content),
+            extracted_text=extracted_text[:500] + "..." if extracted_text and len(extracted_text) > 500 else extracted_text
+        ))
+    
+    return results
+
+@api_router.get("/chat/files/{file_id}")
+async def get_file_info(file_id: str):
+    """Get file metadata"""
+    file_doc = await db.chat_files.find_one({"file_id": file_id}, {"_id": 0})
+    if not file_doc:
+        raise HTTPException(status_code=404, detail="File not found")
+    return file_doc
+
+@api_router.delete("/chat/files/{file_id}")
+async def delete_file(file_id: str):
+    """Delete uploaded file"""
+    file_doc = await db.chat_files.find_one({"file_id": file_id})
+    if not file_doc:
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    # Delete file from disk
+    file_path = Path(file_doc["path"])
+    if file_path.exists():
+        file_path.unlink()
+    
+    # Delete from DB
+    await db.chat_files.delete_one({"file_id": file_id})
+    return {"message": "File deleted", "file_id": file_id}
+
+# ============== Chat Routes ==============
+
 @api_router.post("/chat", response_model=ChatResponse)
 async def chat_with_garvis(request_body: ChatRequest):
     session_id = request_body.session_id or str(uuid.uuid4())
@@ -937,13 +1070,50 @@ async def chat_with_garvis(request_body: ChatRequest):
     chat = chat_sessions[session_id]
     
     try:
-        user_message = UserMessage(text=request_body.message)
+        # Build message with file attachments
+        message_text = request_body.message
+        image_contents = []
+        
+        if request_body.file_ids:
+            document_context = []
+            
+            for file_id in request_body.file_ids:
+                file_doc = await db.chat_files.find_one({"file_id": file_id})
+                if not file_doc:
+                    continue
+                
+                if file_doc.get("is_image"):
+                    # Load image and convert to base64
+                    file_path = Path(file_doc["path"])
+                    if file_path.exists():
+                        with open(file_path, 'rb') as f:
+                            image_data = f.read()
+                        image_base64 = base64.b64encode(image_data).decode('utf-8')
+                        image_contents.append(ImageContent(image_base64=image_base64))
+                else:
+                    # Add document text to context
+                    if file_doc.get("extracted_text"):
+                        document_context.append(f"[Document: {file_doc['filename']}]\n{file_doc['extracted_text']}")
+            
+            # Prepend document context to message
+            if document_context:
+                context_text = "\n\n".join(document_context)
+                message_text = f"Context from uploaded documents:\n{context_text}\n\nUser question: {request_body.message}"
+        
+        # Create user message with optional images
+        if image_contents:
+            user_message = UserMessage(text=message_text, images=image_contents)
+        else:
+            user_message = UserMessage(text=message_text)
+        
         response = await chat.send_message(user_message)
         
+        # Store chat history with file references
         await db.chat_history.insert_one({
             "session_id": session_id,
             "role": "user",
             "content": request_body.message,
+            "file_ids": request_body.file_ids or [],
             "timestamp": datetime.now(timezone.utc).isoformat()
         })
         await db.chat_history.insert_one({
