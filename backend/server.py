@@ -214,10 +214,18 @@ class BrandProfileUpdate(BaseModel):
 class ChatRequest(BaseModel):
     message: str
     session_id: Optional[str] = None
+    file_ids: Optional[List[str]] = None  # List of uploaded file IDs to include
 
 class ChatResponse(BaseModel):
     response: str
     session_id: str
+
+class FileUploadResponse(BaseModel):
+    file_id: str
+    filename: str
+    file_type: str
+    size: int
+    extracted_text: Optional[str] = None
 
 class RoleUpdate(BaseModel):
     role: str
