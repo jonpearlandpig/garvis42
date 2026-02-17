@@ -78,10 +78,10 @@ COMPONENTS = [
     {"name": "AUDIT & EVENT LEDGER", "description": "Immutable, Append-Only Truth Record", "status": "active", "layer": 7, "key_functions": ["Immutable records", "Decision logging", "Routing logs", "Enforcement logs"]},
 ]
 
-# ============== OFFICIAL 39 CANONICAL PIG PEN OPERATORS v4.2.0 ==============
+# ============== OFFICIAL 42 CANONICAL PIG PEN OPERATORS v4.3.0 ==============
 # These are FROZEN - only sovereign (TSID-0001 / jonpearlandpig@gmail.com) can modify
 # is_canonical=True marks these as protected
-# Version: v4.2.0 DRAFT - Pending Canon Lock
+# Version: v4.3.0 DRAFT - Pending Canon Lock
 # Effective Date (proposed): 2026-02-10
 
 PIGPEN_OPERATORS = [
