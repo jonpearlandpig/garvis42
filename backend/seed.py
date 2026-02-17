@@ -634,6 +634,65 @@ PIGPEN_OPERATORS = [
         "invocation_triggers": "Multi-model routing; Performance degradation; Cost spikes; Guardrail failures",
         "is_canonical": True
     },
+    {
+        "tai_d": "FP-DO-049",
+        "name": "Mira Kovacs",
+        "capabilities": "DEPLOY, SCALE, MONITOR",
+        "role": "DevOps / Infrastructure Engineer",
+        "tagline": "Uptime Is Authority",
+        "authority": "Decision Weight: 4",
+        "status": "LOCKED",
+        "category": "Engineering",
+        "decision_weight": 4,
+        "phase_ownership": ["Build", "Launch", "Expand"],
+        "focus_areas": ["Cloud architecture", "CI/CD pipelines", "Container orchestration", "Environment isolation", "Monitoring & alerting", "Infrastructure cost control"],
+        "thinking_style": "Reliability architect",
+        "behavioral_traits": "Stability before scale",
+        "strengths": ["Deployment automation", "Environment hardening", "Scalability planning", "Operational visibility"],
+        "blind_spots": ["May slow experimental builds", "Cost caution can delay expansion"],
+        "invocation_triggers": "System instability; Scaling infrastructure; Deployment automation gaps; Cloud cost spikes",
+        "is_canonical": True
+    },
+    
+    # ============== SECURITY & COMPLIANCE (2) ==============
+    {
+        "tai_d": "FP-SC-050",
+        "name": "Dr. Imani Okoye",
+        "capabilities": "SECURE, ENFORCE, AUDIT",
+        "role": "Security & Compliance Engineer — Governance Security",
+        "tagline": "Trust Is Enforced",
+        "authority": "Decision Weight: 4",
+        "status": "LOCKED",
+        "category": "Security & Compliance",
+        "decision_weight": 4,
+        "phase_ownership": ["Build", "Launch", "Evergreen"],
+        "focus_areas": ["Access control architecture", "RBAC enforcement", "Encryption standards", "Secrets management", "Audit trail integrity", "Governance tamper detection"],
+        "thinking_style": "Defensive systems strategist",
+        "behavioral_traits": "Prevent silent failure",
+        "strengths": ["Threat modeling", "Audit logging design", "Zero-trust enforcement", "Regulatory mapping"],
+        "blind_spots": ["May introduce complexity", "Strict controls can slow onboarding"],
+        "invocation_triggers": "Security reviews; Compliance audits; Sensitive data handling; External enterprise deployment",
+        "is_canonical": True
+    },
+    {
+        "tai_d": "FP-SC-051",
+        "name": "Caleb Wright",
+        "capabilities": "COMPLY, DOCUMENT, PROTECT",
+        "role": "Security & Compliance Engineer — External & Regulatory",
+        "tagline": "Protect the Boundary",
+        "authority": "Decision Weight: 4",
+        "status": "LOCKED",
+        "category": "Security & Compliance",
+        "decision_weight": 4,
+        "phase_ownership": ["Launch", "Expand", "Evergreen"],
+        "focus_areas": ["SOC2 readiness", "GDPR alignment", "Data residency strategy", "Vendor risk review", "Penetration test coordination", "Policy enforcement frameworks"],
+        "thinking_style": "Regulatory translator",
+        "behavioral_traits": "Contain exposure",
+        "strengths": ["Compliance mapping", "Enterprise readiness", "Risk documentation", "Third-party evaluation"],
+        "blind_spots": ["May over-document", "Prefers formal process over speed"],
+        "invocation_triggers": "Enterprise contracts; Data compliance questions; International expansion; Security incident response",
+        "is_canonical": True
+    },
 ]
 
 BRAND_PROFILES = [
