@@ -27,9 +27,9 @@ Build a web application based on PDF documentation for the "GoGarvis" system. Th
 - Sovereign user (jonpearlandpig@gmail.com) has special permissions
 
 ### Pig Pen Operators (Updated - Feb 17, 2026)
-- ✅ Canonical list of **39 operators** (v4.2.0 DRAFT)
+- ✅ Canonical list of **42 operators** (v4.3.0 DRAFT)
 - Operators are frozen/locked from editing
-- **Categories (11 total)**:
+- **Categories (12 total)**:
   - Executive & Architecture (3)
   - Creative Engine (9)
   - Systems & Ops (6)
@@ -40,7 +40,8 @@ Build a web application based on PDF documentation for the "GoGarvis" system. Th
   - Governance & QA (1)
   - Talent & Casting (1)
   - Public Relations (1)
-  - Engineering (3)
+  - Engineering (4)
+  - Security & Compliance (2)
 
 ### Open-Source Starter Kit (Completed)
 - Docker configuration (docker-compose.yml, Dockerfiles)
@@ -93,6 +94,7 @@ Build a web application based on PDF documentation for the "GoGarvis" system. Th
 - (P2) MOSE visualization tool - Interactive display of operator decision weights
 
 ## Changelog
+- **Feb 17, 2026**: Updated Pig Pen operators to v4.3.0 with 42 canonical operators (added: Mira Kovacs - DevOps, Dr. Imani Okoye & Caleb Wright - Security & Compliance)
 - **Feb 17, 2026**: Updated Pig Pen operators to v4.2.0 with 39 canonical operators (added 6 new categories: Engineering, Governance & QA, Talent & Casting, Public Relations, Common Sense & Mission Compliance)
 - **Feb 14, 2026**: Added bulk file upload to Garvis AI chat (images + documents, drag & drop, vision analysis, text extraction)
 - **Feb 14, 2026**: Fixed Pig Pen operator count from 54 to correct 33 canonical operators
