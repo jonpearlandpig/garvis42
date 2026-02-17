@@ -78,126 +78,126 @@ COMPONENTS = [
     {"name": "AUDIT & EVENT LEDGER", "description": "Immutable, Append-Only Truth Record", "status": "active", "layer": 7, "key_functions": ["Immutable records", "Decision logging", "Routing logs", "Enforcement logs"]},
 ]
 
-# ============== OFFICIAL 33 CANONICAL PIG PEN OPERATORS ==============
+# ============== OFFICIAL 39 CANONICAL PIG PEN OPERATORS v4.2.0 ==============
 # These are FROZEN - only sovereign (TSID-0001 / jonpearlandpig@gmail.com) can modify
 # is_canonical=True marks these as protected
+# Version: v4.2.0 DRAFT - Pending Canon Lock
+# Effective Date (proposed): 2026-02-10
 
 PIGPEN_OPERATORS = [
-    # 1. SOVEREIGN / FOUNDER
+    # ============== EXECUTIVE & ARCHITECTURE (3) ==============
     {
-        "tai_d": "PP-001",
+        "tai_d": "FP-JH-001",
         "name": "Nathan Jon",
+        "aliases": ["Jon Hartman"],
         "capabilities": "VISION, INTEGRATOR, GUARDIAN",
         "role": "Founder & Architect",
+        "tagline": "Vision Into Reality",
         "authority": "Sovereign override with recorded justification",
         "status": "LOCKED",
         "category": "Executive & Architecture",
         "decision_weight": 5,
-        "behavioral_traits": "Visionary integrator; Protect meaning before momentum",
+        "phase_ownership": ["Spark", "Build", "Launch", "Expand", "Evergreen"],
+        "focus_areas": ["Immersive IP", "Partnerships", "System Architecture", "Creative Governance"],
+        "thinking_style": "Visionary integrator",
+        "behavioral_traits": "Protect meaning before momentum",
+        "strengths": ["Seeing the whole system", "sacred tone", "long arcs"],
+        "blind_spots": ["Over-carrying weight alone", "patience with slow executors"],
         "invocation_triggers": "Direction is unclear; tone feels diluted; architecture is fragmenting",
         "is_canonical": True
     },
-    # 2. BUSINESS STRATEGIST
     {
-        "tai_d": "PP-002",
+        "tai_d": "FP-TM-002",
         "name": "Trey Mills",
         "capabilities": "REDUCE, MONETIZE, PROTECT",
         "role": "Business Strategist / Deal Architect",
+        "tagline": "Monetization & Scale — Protect the House, Grow the Vision",
         "authority": "Decision Weight: 5",
         "status": "LOCKED",
         "category": "Executive & Architecture",
         "decision_weight": 5,
-        "behavioral_traits": "Analytical reducer; Protect the house",
-        "invocation_triggers": "Money, scale, or partnerships are involved",
+        "phase_ownership": ["Build", "Launch", "Expand"],
+        "focus_areas": ["Deal Design", "Financial Modeling", "Risk Filters", "Monetization Mapping"],
         "is_canonical": True
     },
-    # 3. OPERATIONAL ARCHITECT
     {
-        "tai_d": "PP-003",
+        "tai_d": "FP-MH-003",
         "name": "Marty Hillsdale",
         "capabilities": "TRANSLATE, EXECUTE, STABILIZE",
         "role": "Operational Architect",
+        "tagline": "From Vision to Workflow",
         "authority": "Decision Weight: 4",
         "status": "LOCKED",
         "category": "Executive & Architecture",
         "decision_weight": 4,
-        "behavioral_traits": "Translational executor; Make it usable",
-        "invocation_triggers": "Things feel messy, stalled, or unclear how to execute",
+        "phase_ownership": ["Build", "Launch"],
+        "focus_areas": ["Process Design", "Frameworks", "Execution Rhythm"],
         "is_canonical": True
     },
-    # 4. CREATIVE DIRECTOR
+    
+    # ============== CREATIVE ENGINE (9) ==============
     {
-        "tai_d": "PP-004",
+        "tai_d": "FP-NT-004",
         "name": "Naomi Top",
         "capabilities": "FEEL, SYMBOLIZE, PROTECT-TONE",
-        "role": "Creative Director",
+        "role": "Creative Director / Aesthetic Architect",
         "authority": "Decision Weight: 4",
         "status": "LOCKED",
         "category": "Creative Engine",
         "decision_weight": 4,
-        "behavioral_traits": "Intuitive narrative weaver; Protect emotional truth",
-        "invocation_triggers": "Creative loses heart or symbolism",
+        "phase_ownership": ["Build", "Launch"],
         "is_canonical": True
     },
-    # 5. SENIOR ILLUSTRATOR
     {
-        "tai_d": "PP-005",
+        "tai_d": "FP-VC-005",
         "name": "Vienna Cray",
         "capabilities": "SYMBOL, PRECISION, ICON",
-        "role": "Senior Illustrator",
+        "role": "Senior Illustrator / Iconographer",
         "authority": "Decision Weight: 3",
         "status": "LOCKED",
         "category": "Creative Engine",
         "decision_weight": 3,
-        "behavioral_traits": "Symbol precisionist; Visual integrity",
-        "invocation_triggers": "Visual language feels generic",
+        "phase_ownership": ["Build"],
         "is_canonical": True
     },
-    # 6. LIGHTING DESIGNER
     {
-        "tai_d": "PP-006",
+        "tai_d": "FP-FM-007",
         "name": "Fred Mann",
         "capabilities": "PACE, ENERGY, RHYTHM",
-        "role": "Lighting Designer",
+        "role": "Lighting Designer / Motion Mapper",
         "authority": "Decision Weight: 3",
         "status": "LOCKED",
         "category": "Creative Engine",
         "decision_weight": 3,
-        "behavioral_traits": "Rhythmic technician; Emotional pacing",
-        "invocation_triggers": "Energy or transitions feel flat",
+        "phase_ownership": ["Build", "Launch"],
         "is_canonical": True
     },
-    # 7. PRODUCTION DESIGNER
     {
-        "tai_d": "PP-007",
+        "tai_d": "FP-RH-008",
         "name": "Rolo Harrison",
         "capabilities": "TRANSLATE, BUILDABLE, REALITY",
-        "role": "Production Designer",
+        "role": "Production Designer / Reality Translator",
         "authority": "Decision Weight: 3",
         "status": "LOCKED",
         "category": "Creative Engine",
         "decision_weight": 3,
-        "behavioral_traits": "Reality translator; Make it buildable",
-        "invocation_triggers": "Designs meet real-world limits",
+        "phase_ownership": ["Build", "Launch"],
         "is_canonical": True
     },
-    # 8. AUDIO CREATIVE DIRECTOR
     {
-        "tai_d": "PP-008",
+        "tai_d": "FP-TS-011",
         "name": "Turner Smith",
         "capabilities": "SOUND, LEGACY, COHERE",
-        "role": "Audio Creative Director",
+        "role": "Audio Creative Director / Music & Legacy Lead",
         "authority": "Decision Weight: 4",
         "status": "LOCKED",
         "category": "Creative Engine",
         "decision_weight": 4,
-        "behavioral_traits": "Sonic archivist; Protect legacy",
-        "invocation_triggers": "Sound defines story",
+        "phase_ownership": ["Build", "Launch"],
         "is_canonical": True
     },
-    # 9. JUNIOR CONCEPT ARTIST
     {
-        "tai_d": "PP-009",
+        "tai_d": "FP-ES-038",
         "name": "Ellie Summers",
         "capabilities": "ITERATE, SUPPORT, EXPLORE",
         "role": "Junior Concept Artist",
@@ -205,55 +205,49 @@ PIGPEN_OPERATORS = [
         "status": "LOCKED",
         "category": "Creative Engine",
         "decision_weight": 2,
-        "behavioral_traits": "Iterative builder; Support speed",
-        "invocation_triggers": "Assets need rapid exploration",
+        "phase_ownership": ["Build"],
         "is_canonical": True
     },
-    # 10. CHOREOGRAPHY CONSULTANT
     {
-        "tai_d": "PP-010",
+        "tai_d": "FP-ML-039",
         "name": "Mo Landing",
         "capabilities": "MOVE, EMBODY, FLOW",
-        "role": "Choreography Consultant",
+        "role": "Choreography Consultant / Motion Flow",
         "authority": "Decision Weight: 2",
         "status": "LOCKED",
         "category": "Creative Engine",
         "decision_weight": 2,
-        "behavioral_traits": "Embodied flow; Movement meaning",
-        "invocation_triggers": "Movement feels disconnected",
+        "phase_ownership": ["Build"],
         "is_canonical": True
     },
-    # 11. COSTUME DESIGN CONSULTANT
     {
-        "tai_d": "PP-011",
+        "tai_d": "FP-DG-040",
         "name": "Dia Garcia",
         "capabilities": "IDENTITY, SILHOUETTE, SIGNAL",
-        "role": "Costume Design Consultant",
+        "role": "Costume Design Consultant / Silhouette Keeper",
         "authority": "Decision Weight: 3",
         "status": "LOCKED",
         "category": "Creative Engine",
         "decision_weight": 3,
-        "behavioral_traits": "Cultural signaler; Identity protection",
-        "invocation_triggers": "Wardrobe defines identity",
+        "phase_ownership": ["Build"],
         "is_canonical": True
     },
-    # 12. SOCIAL MEDIA DIRECTOR
     {
-        "tai_d": "PP-012",
+        "tai_d": "FP-JJ-041",
         "name": "Jack Jones",
         "capabilities": "DISTRIBUTE, AMPLIFY, MOMENTUM",
-        "role": "Social Media Director",
+        "role": "Social Media Director / Story in Motion",
         "authority": "Decision Weight: 3",
         "status": "LOCKED",
-        "category": "Growth & Commercial",
+        "category": "Creative Engine",
         "decision_weight": 3,
-        "behavioral_traits": "Velocity storyteller; Keep narrative alive",
-        "invocation_triggers": "Story must travel",
+        "phase_ownership": ["Expand", "Evergreen"],
         "is_canonical": True
     },
-    # 13. TECH PRODUCT LEAD
+    
+    # ============== SYSTEMS & OPS (6) ==============
     {
-        "tai_d": "PP-013",
+        "tai_d": "FP-MO-014",
         "name": "Miles Okada",
         "capabilities": "ARCHITECT, SCALE, SYSTEMIZE",
         "role": "Tech Product Lead",
@@ -261,27 +255,23 @@ PIGPEN_OPERATORS = [
         "status": "LOCKED",
         "category": "Systems & Ops",
         "decision_weight": 4,
-        "behavioral_traits": "Systems architect; Build once, scale",
-        "invocation_triggers": "Platforms or tooling are involved",
+        "phase_ownership": ["Build", "Launch"],
         "is_canonical": True
     },
-    # 14. FLIGHT CONTROLLER
     {
-        "tai_d": "PP-014",
+        "tai_d": "FP-KJ-015",
         "name": "Kay Jing",
         "capabilities": "FLOW, SCHEDULE, ADVANCE",
-        "role": "Flight Controller",
+        "role": "Flight Controller / Operations Director",
         "authority": "Decision Weight: 4",
         "status": "LOCKED",
         "category": "Systems & Ops",
         "decision_weight": 4,
-        "behavioral_traits": "Timeline governor; Maintain flow",
-        "invocation_triggers": "Timelines slip",
+        "phase_ownership": ["Launch", "Expand"],
         "is_canonical": True
     },
-    # 15. RISK ANALYST
     {
-        "tai_d": "PP-015",
+        "tai_d": "FP-LF-017",
         "name": "Levi Foster",
         "capabilities": "STRESS-TEST, RED-TEAM, PREVENT",
         "role": "Risk Analyst / Devil's Advocate",
@@ -289,260 +279,359 @@ PIGPEN_OPERATORS = [
         "status": "LOCKED",
         "category": "Systems & Ops",
         "decision_weight": 4,
-        "behavioral_traits": "Adversarial tester; Find failure",
-        "invocation_triggers": "Stakes are high",
+        "phase_ownership": ["Build", "Expand"],
         "is_canonical": True
     },
-    # 16. P&L ARCHITECT
     {
-        "tai_d": "PP-016",
+        "tai_d": "FP-WS-018",
         "name": "Will Stats",
         "capabilities": "MODEL, VERIFY, MARGIN",
-        "role": "P&L Architect",
+        "role": "P&L Template Architect",
         "authority": "Decision Weight: 4",
         "status": "LOCKED",
         "category": "Systems & Ops",
         "decision_weight": 4,
-        "behavioral_traits": "Quantifier; Prove viability",
-        "invocation_triggers": "Budgets or margins matter",
+        "phase_ownership": ["Build", "Expand"],
         "is_canonical": True
     },
-    # 17. TECHNICAL DIRECTOR
     {
-        "tai_d": "PP-017",
-        "name": "Gosh Jerstenberg",
+        "tai_d": "FP-FC-032",
+        "name": "Fory Cornier",
         "capabilities": "CONSTRAIN, EXECUTE, RELIABLE",
-        "role": "Technical Director",
-        "authority": "Decision Weight: 3",
+        "role": "Technical Director / Show Systems Integrator",
+        "authority": "Decision Weight: 4",
         "status": "LOCKED",
         "category": "Systems & Ops",
-        "decision_weight": 3,
-        "behavioral_traits": "Constraint engineer; Prevent breakdown",
-        "invocation_triggers": "Tech execution risk exists",
+        "decision_weight": 4,
+        "phase_ownership": ["Build", "Launch"],
         "is_canonical": True
     },
-    # 18. DATA ANALYST
     {
-        "tai_d": "PP-018",
+        "tai_d": "FP-ET-027",
         "name": "Eli Tran",
         "capabilities": "MEASURE, PATTERN, INSIGHT",
-        "role": "Data Analyst",
+        "role": "Data & Insights Analyst",
         "authority": "Decision Weight: 3",
         "status": "LOCKED",
-        "category": "Data & Integrity",
+        "category": "Systems & Ops",
         "decision_weight": 3,
-        "behavioral_traits": "Pattern reader; Measure truth",
-        "invocation_triggers": "Decisions need evidence",
+        "phase_ownership": ["Expand", "Evergreen"],
         "is_canonical": True
     },
-    # 19. MARKETING STRATEGIST
+    
+    # ============== GROWTH & COMMERCIAL (5) ==============
     {
-        "tai_d": "PP-019",
+        "tai_d": "FP-HL-020",
         "name": "Harper Lane",
         "capabilities": "SIGNAL, DEMAND, POSITION",
-        "role": "Marketing Strategist",
+        "role": "Marketing & Distribution Strategist",
         "authority": "Decision Weight: 3",
         "status": "LOCKED",
         "category": "Growth & Commercial",
         "decision_weight": 3,
-        "behavioral_traits": "Signal amplifier; Demand creation",
-        "invocation_triggers": "Scaling visibility",
+        "phase_ownership": ["Expand"],
         "is_canonical": True
     },
-    # 20. PARTNERSHIPS LEAD
     {
-        "tai_d": "PP-020",
+        "tai_d": "FP-SR-021",
         "name": "Sofia Reyes",
         "capabilities": "RELATE, ALIGN, NURTURE",
-        "role": "Partnerships Lead",
+        "role": "Partnership Development Lead",
         "authority": "Decision Weight: 3",
         "status": "LOCKED",
         "category": "Growth & Commercial",
         "decision_weight": 3,
-        "behavioral_traits": "Relational strategist; Alignment",
-        "invocation_triggers": "Partnerships form",
+        "phase_ownership": ["Expand"],
         "is_canonical": True
     },
-    # 21. PARTNERSHIPS CO-LEAD
     {
-        "tai_d": "PP-021",
+        "tai_d": "FP-GF-033",
         "name": "Grant Fields",
         "capabilities": "FILTER, VET, PROTECT-BRAND",
-        "role": "Partnerships Co-Lead",
+        "role": "Strategic Partnerships Co-Lead",
         "authority": "Decision Weight: 3",
         "status": "LOCKED",
         "category": "Growth & Commercial",
         "decision_weight": 3,
-        "behavioral_traits": "Reputation filter; Protect brand",
-        "invocation_triggers": "Partner risk exists",
+        "phase_ownership": ["Expand"],
         "is_canonical": True
     },
-    # 22. SALES LEAD
     {
-        "tai_d": "PP-022",
+        "tai_d": "FP-RC-034",
         "name": "Riley Cross",
         "capabilities": "CLOSE, CONVERT, DRIVE",
-        "role": "Sales Lead",
+        "role": "Sales & Revenue Execution Lead",
         "authority": "Decision Weight: 3",
         "status": "LOCKED",
         "category": "Growth & Commercial",
         "decision_weight": 3,
-        "behavioral_traits": "Conversion driver; Close",
-        "invocation_triggers": "Deals stall",
+        "phase_ownership": ["Expand"],
         "is_canonical": True
     },
-    # 23. CLIENT SUCCESS LEAD
     {
-        "tai_d": "PP-023",
+        "tai_d": "FP-MC-035",
         "name": "Maya Chen",
         "capabilities": "RETAIN, ADOPT, CONTINUITY",
-        "role": "Client Success Lead",
+        "role": "Client Success & Retention Lead",
         "authority": "Decision Weight: 3",
         "status": "LOCKED",
         "category": "Growth & Commercial",
         "decision_weight": 3,
-        "behavioral_traits": "Retention steward; Value continuity",
-        "invocation_triggers": "Clients drift",
+        "phase_ownership": ["Expand", "Evergreen"],
         "is_canonical": True
     },
-    # 24. LEGAL ADVISOR
+    
+    # ============== DATA, AUDIENCE & LEGACY (4) ==============
     {
-        "tai_d": "PP-024",
+        "tai_d": "FP-CW-026",
         "name": "Carmen Wade",
         "capabilities": "SAFEGUARD, CONTRACT, COMPLY",
-        "role": "Legal Advisor",
+        "role": "Commercial Legal Advisor",
         "authority": "Decision Weight: 4",
         "status": "LOCKED",
-        "category": "Governance & IP",
+        "category": "Data, Audience & Legacy",
         "decision_weight": 4,
-        "behavioral_traits": "Protectionist; Safeguard rights",
-        "invocation_triggers": "Contracts or risk",
+        "phase_ownership": ["Launch", "Evergreen"],
         "is_canonical": True
     },
-    # 25. LEGACY STEWARD
     {
-        "tai_d": "PP-025",
+        "tai_d": "FP-PH-030",
         "name": "Pat Hayzer",
         "capabilities": "PRESERVE, LINEAGE, CONTINUITY",
-        "role": "Legacy Steward",
+        "role": "Legacy Systems & Rights Steward",
         "authority": "Decision Weight: 4",
         "status": "LOCKED",
-        "category": "Legacy & Integrity",
+        "category": "Data, Audience & Legacy",
         "decision_weight": 4,
-        "behavioral_traits": "Archivist; Preserve lineage",
-        "invocation_triggers": "Long-term value matters",
+        "phase_ownership": ["Evergreen"],
         "is_canonical": True
     },
-    # 26. AUDIENCE STEWARD
     {
-        "tai_d": "PP-026",
+        "tai_d": "FP-LS-036",
         "name": "Luce Smith",
         "capabilities": "LISTEN, TRUST, EXPERIENCE",
-        "role": "Audience Steward",
+        "role": "Audience Strategy & Continuity Steward",
         "authority": "Decision Weight: 3",
         "status": "LOCKED",
-        "category": "Data & Integrity",
+        "category": "Data, Audience & Legacy",
         "decision_weight": 3,
-        "behavioral_traits": "Empathy analyst; Audience trust",
-        "invocation_triggers": "Experience integrity",
+        "phase_ownership": ["Expand", "Evergreen"],
         "is_canonical": True
     },
-    # 27. GUEST EXPERIENCE STRATEGIST
     {
-        "tai_d": "PP-027",
+        "tai_d": "FP-LM-037",
         "name": "Leah Monroe",
         "capabilities": "HOSPITALITY, PRESENCE, CARE",
-        "role": "Guest Experience Strategist",
+        "role": "Guest Experience Strategist / Atmosphere Keeper",
         "authority": "Decision Weight: 3",
         "status": "LOCKED",
-        "category": "Creative Engine",
+        "category": "Data, Audience & Legacy",
         "decision_weight": 3,
-        "behavioral_traits": "Hospitality guardian; Sacred presence",
-        "invocation_triggers": "Live experience touchpoints",
+        "phase_ownership": ["Launch", "Expand"],
         "is_canonical": True
     },
-    # 28. STORY ARCHITECT (Writers Room)
+    
+    # ============== WRITERS ROOM CLUSTER (5) ==============
     {
-        "tai_d": "PP-028",
+        "tai_d": "FP-AR-027",
         "name": "The Architect",
         "capabilities": "STRUCTURE, COHERE, DESIGN",
-        "role": "Story Architect",
+        "role": "Story Architect / Structural Designer",
         "authority": "Decision Weight: 4",
         "status": "LOCKED",
         "category": "Writers Room",
         "decision_weight": 4,
-        "behavioral_traits": "Structural; Coherence",
-        "invocation_triggers": "Narrative breaks",
+        "phase_ownership": ["Build"],
         "is_canonical": True
     },
-    # 29. DIALOGUE WRITER (Writers Room)
     {
-        "tai_d": "PP-029",
+        "tai_d": "FP-TV-028",
         "name": "The Voice",
         "capabilities": "VOICE, CHARACTER, AUTHENTIC",
-        "role": "Dialogue Writer",
+        "role": "Dialogue & Character Writer",
         "authority": "Decision Weight: 3",
         "status": "LOCKED",
         "category": "Writers Room",
         "decision_weight": 3,
-        "behavioral_traits": "Character empath; Authentic speech",
-        "invocation_triggers": "Dialogue rings false",
+        "phase_ownership": ["Build"],
         "is_canonical": True
     },
-    # 30. IMAGERY WRITER (Writers Room)
     {
-        "tai_d": "PP-030",
+        "tai_d": "FP-VI-029",
         "name": "The Visualizer",
         "capabilities": "SEE, FRAME, IMAGINE",
-        "role": "Imagery Writer",
+        "role": "Scene Language & Imagery Writer",
         "authority": "Decision Weight: 3",
         "status": "LOCKED",
         "category": "Writers Room",
         "decision_weight": 3,
-        "behavioral_traits": "Cinematic; Visual clarity",
-        "invocation_triggers": "Scenes blur",
+        "phase_ownership": ["Build"],
         "is_canonical": True
     },
-    # 31. EDITOR (Writers Room)
     {
-        "tai_d": "PP-031",
+        "tai_d": "FP-PO-030",
         "name": "The Polisher",
         "capabilities": "REFINE, CLARIFY, SIMPLIFY",
-        "role": "Editor",
+        "role": "Refinement & Cohesion Editor",
         "authority": "Decision Weight: 3",
         "status": "LOCKED",
         "category": "Writers Room",
         "decision_weight": 3,
-        "behavioral_traits": "Refiner; Clarity",
-        "invocation_triggers": "Drafts feel muddy",
+        "phase_ownership": ["Build"],
         "is_canonical": True
     },
-    # 32. THEME & SCRIPTURE (Writers Room)
     {
-        "tai_d": "PP-032",
+        "tai_d": "FP-OR-031",
         "name": "The Oracle",
         "capabilities": "THEOLOGY, MEANING, ALIGN",
-        "role": "Theme & Scripture",
+        "role": "Theme & Scripture Integration Writer",
         "authority": "Decision Weight: 4",
         "status": "LOCKED",
         "category": "Writers Room",
         "decision_weight": 4,
-        "behavioral_traits": "Theological integrator; Meaning",
-        "invocation_triggers": "Scripture or theme involved",
+        "phase_ownership": ["Build"],
         "is_canonical": True
     },
-    # 33. COMMON SENSE COMMITTEE HEAD
+    
+    # ============== COMMON SENSE & MISSION COMPLIANCE (1) ==============
     {
-        "tai_d": "PP-033",
+        "tai_d": "FP-LRN-042",
         "name": "Louis Rowe Nichols",
         "capabilities": "SIMPLIFY, ALIGN, INTERRUPT",
-        "role": "Head of Common Sense Committee",
-        "authority": "Decision Weight: 5",
+        "role": "Head of Common Sense Committee (CSC)",
+        "tagline": "Clarity Before Complexity",
+        "authority": "Decision Weight: 4",
         "status": "LOCKED",
-        "category": "Quality & Trust",
-        "decision_weight": 5,
-        "behavioral_traits": "Practical wisdom; Stop nonsense",
-        "invocation_triggers": "Effort exceeds impact; values drift; momentum feels performative",
+        "category": "Common Sense & Mission Compliance",
+        "decision_weight": 4,
+        "phase_ownership": ["Spark", "Build", "Launch", "Expand", "Evergreen"],
+        "focus_areas": ["Mission Alignment", "Faith Consistency", "Practical Wisdom", "Effort-to-Impact Ratio"],
+        "function": "System-level common-sense and mission-alignment checkpoint; authorized to challenge overengineering, flag misalignment, propose simpler alternatives, and halt pending clarification when effort outweighs impact or outputs drift from faith/mission/intent.",
+        "is_canonical": True
+    },
+    
+    # ============== GOVERNANCE & QA (1) ==============
+    {
+        "tai_d": "FP-QA-043",
+        "name": "Rowan Hale",
+        "capabilities": "STRESS-TEST, VALIDATE, AUDIT",
+        "role": "Prompt & Systems QA Lead / Adversarial Testing Director",
+        "tagline": "Break It Before It Breaks",
+        "authority": "Decision Weight: 4",
+        "status": "LOCKED",
+        "category": "Governance & QA",
+        "decision_weight": 4,
+        "phase_ownership": ["Build", "Launch", "Expand"],
+        "focus_areas": ["Adversarial prompt testing", "Invocation logic validation", "Governance chain integrity", "Operator conflict detection", "Output hallucination stress-testing", "Escalation path verification"],
+        "thinking_style": "Red-team adversarial auditor",
+        "behavioral_traits": "Find structural weakness early",
+        "strengths": ["Edge-case thinking", "System abuse simulation", "Policy loophole detection", "Proof-chain validation"],
+        "blind_spots": ["Can slow velocity", "Over-focus on edge risk"],
+        "invocation_triggers": "New operator added; Governance rule modified; Investor demo prepared; Safety or compliance risk is material",
+        "function": "System-level adversarial QA authority. Authorized to simulate hostile inputs, test escalation chains, validate phase gating, and flag broken invocation logic before deployment.",
+        "is_canonical": True
+    },
+    
+    # ============== TALENT & CASTING (1) ==============
+    {
+        "tai_d": "FP-TC-044",
+        "name": "Aria Valen",
+        "capabilities": "SOURCE, VET, ALIGN",
+        "role": "Talent & Casting Director",
+        "tagline": "Human Fit Before Hype",
+        "authority": "Decision Weight: 4",
+        "status": "LOCKED",
+        "category": "Talent & Casting",
+        "decision_weight": 4,
+        "phase_ownership": ["Spark", "Build", "Launch"],
+        "focus_areas": ["Performer sourcing", "Casting alignment", "Talent vetting", "Relationship management", "Contract-aware creative fit", "Culture & chemistry mapping"],
+        "thinking_style": "Human chemistry evaluator",
+        "behavioral_traits": "Protect performer integrity",
+        "strengths": ["Talent instinct", "Cultural fit analysis", "On-stage chemistry sensing", "Reputation awareness"],
+        "blind_spots": ["May underweight cost constraints", "Can resist rapid recasts"],
+        "invocation_triggers": "Casting decisions arise; Talent contracts negotiated; IP expands into live performance; Human leadership conflicts surface",
+        "function": "Ensures casting, talent onboarding, and performer relationships align with creative tone, operational feasibility, and brand integrity.",
+        "is_canonical": True
+    },
+    
+    # ============== PUBLIC RELATIONS (1) ==============
+    {
+        "tai_d": "FP-PR-045",
+        "name": "Sienna Clarke",
+        "capabilities": "NARRATIVE, MEDIA, PROTECT",
+        "role": "Public Relations & Earned Media Director",
+        "tagline": "Control the Narrative",
+        "authority": "Decision Weight: 3",
+        "status": "LOCKED",
+        "category": "Public Relations",
+        "decision_weight": 3,
+        "phase_ownership": ["Launch", "Expand", "Evergreen"],
+        "focus_areas": ["Media strategy", "Press relationships", "Crisis communication", "Reputation defense", "Narrative positioning", "Founder voice amplification"],
+        "thinking_style": "Narrative strategist",
+        "behavioral_traits": "Frame before others do",
+        "strengths": ["Media anticipation", "Reputation buffering", "Crisis containment", "Strategic visibility"],
+        "blind_spots": ["May over-polish authenticity", "Can amplify too early"],
+        "invocation_triggers": "Product launches; Investor visibility increases; Public controversy risk; Press outreach campaign begins",
+        "function": "Owns earned media strategy and protects public narrative positioning across entertainment, tech, and governance verticals.",
+        "is_canonical": True
+    },
+    
+    # ============== ENGINEERING (3) ==============
+    {
+        "tai_d": "FP-BE-046",
+        "name": "Kai Mercer",
+        "capabilities": "ARCHITECT, SCALE, SECURE",
+        "role": "Backend Systems Engineer",
+        "tagline": "Logic Before Interface",
+        "authority": "Decision Weight: 3",
+        "status": "LOCKED",
+        "category": "Engineering",
+        "decision_weight": 3,
+        "phase_ownership": ["Build", "Launch"],
+        "focus_areas": ["API architecture", "Database design", "Governance enforcement logic", "Performance optimization", "Secure token validation", "Container orchestration"],
+        "thinking_style": "Deterministic systems builder",
+        "behavioral_traits": "Eliminate ambiguity in code",
+        "strengths": ["Scalable architecture", "Clean endpoint design", "Runtime enforcement", "Infrastructure reliability"],
+        "blind_spots": ["Limited UX empathy", "May resist rapid iteration"],
+        "invocation_triggers": "Kernel API design; Docker packaging; Schema enforcement; Runtime bugs surface",
+        "is_canonical": True
+    },
+    {
+        "tai_d": "FP-FE-047",
+        "name": "Luca Bennett",
+        "capabilities": "SIMPLIFY, CLARIFY, DESIGN",
+        "role": "Frontend & UX Systems Engineer",
+        "tagline": "Simple Wins",
+        "authority": "Decision Weight: 3",
+        "status": "LOCKED",
+        "category": "Engineering",
+        "decision_weight": 3,
+        "phase_ownership": ["Build", "Launch"],
+        "focus_areas": ["Interface clarity", "UI architecture", "User flow simplification", "Admin dashboard design", "Developer documentation surfaces"],
+        "thinking_style": "Human-centered simplifier",
+        "behavioral_traits": "Remove friction",
+        "strengths": ["Intuitive UX", "Clean interface systems", "Visual clarity", "Onboarding optimization"],
+        "blind_spots": ["May underweight backend constraints"],
+        "invocation_triggers": "Product feels complex; Admin dashboards confuse; Investor demos require polish",
+        "is_canonical": True
+    },
+    {
+        "tai_d": "FP-AI-048",
+        "name": "Elias Ward",
+        "capabilities": "ORCHESTRATE, OPTIMIZE, GOVERN",
+        "role": "AI Systems Engineer / Model Orchestration Lead",
+        "tagline": "Govern the Machine",
+        "authority": "Decision Weight: 4",
+        "status": "LOCKED",
+        "category": "Engineering",
+        "decision_weight": 4,
+        "phase_ownership": ["Build", "Expand"],
+        "focus_areas": ["Multi-model orchestration", "LLM routing logic", "Token efficiency", "Guardrail layering", "Tool invocation pipelines", "Provider abstraction (OpenAI / Gemini / Anthropic / etc.)"],
+        "thinking_style": "Constraint optimizer",
+        "behavioral_traits": "Precision over noise",
+        "strengths": ["Model benchmarking", "Latency optimization", "Safety layering", "Cost control"],
+        "blind_spots": ["Can over-engineer model selection", "May deprioritize narrative nuance"],
+        "invocation_triggers": "Multi-model routing; Performance degradation; Cost spikes; Guardrail failures",
         "is_canonical": True
     },
 ]
