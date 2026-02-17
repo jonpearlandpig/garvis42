@@ -756,7 +756,7 @@ async def seed_database():
         await db.components.insert_many(components)
         print(f"Seeded {len(components)} components")
     
-    # CLEAR and reseed Pig Pen operators with official v4.2.0 (39 operators)
+    # CLEAR and reseed Pig Pen operators with official v4.3.0 (42 operators)
     await db.pigpen_operators.delete_many({})
     operators = []
     for o in PIGPEN_OPERATORS:
@@ -768,7 +768,7 @@ async def seed_database():
             "updated_at": now
         })
     await db.pigpen_operators.insert_many(operators)
-    print(f"Seeded {len(operators)} Pig Pen operators (OFFICIAL CANONICAL v4.2.0)")
+    print(f"Seeded {len(operators)} Pig Pen operators (OFFICIAL CANONICAL v4.3.0)")
     
     # Seed brand profiles
     if await db.brand_profiles.count_documents({}) == 0:
