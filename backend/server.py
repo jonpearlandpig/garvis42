@@ -41,41 +41,47 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 
 # LLM Integration
-from emergentintegrations.llm.chat import LlmChat, UserMessage, ImageContent
+from litellm import acompletion  # Async completion for FastAPI
+
 chat_sessions = {}
 
-# Secure LLM Proxy Endpoint (from plugin)
+
+# Unified LLM proxy using LiteLLM
+async def proxy_llm(messages: list, model: str = "anthropic/claude-3-5-sonnet-20241022", **kwargs):
+    try:
+        response = await acompletion(
+            model=model,
+            messages=messages,
+            api_key=kwargs.get("api_key"),
+            temperature=0.2,
+            max_tokens=4000,
+            **kwargs
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        raise Exception(f"LLM proxy failed: {str(e)}")
+
 @api_router.post("/llm/proxy")
 @limiter.limit("20/minute")
 async def llm_proxy(request: Request, payload: dict = Body(...)):
-    """Proxy LLM requests to Emergent/OpenAI using backend-only key. Audited."""
-    api_key = os.environ.get("EMERGENT_LLM_KEY")
-    if not api_key:
-        raise HTTPException(status_code=500, detail="LLM API key not configured")
+    """Proxy LLM requests to LLMs using LiteLLM. Audited."""
     prompt = payload.get("prompt")
     context = payload.get("context")
     if not prompt:
         raise HTTPException(status_code=400, detail="Prompt required")
-    # Audit log: who is calling
     user = await get_current_user(request)
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
     await log_audit(user, "llm_proxy", "llm", user.user_id, user.name, {"prompt": prompt})
-    # Forward to Emergent/OpenAI (example endpoint, adjust as needed)
-    async with httpx.AsyncClient(timeout=30) as client:
-        resp = await client.post(
-            "https://api.openai.com/v1/chat/completions",
-            headers={"Authorization": f"Bearer {api_key}"},
-            json={"model": "gpt-5.2", "messages": [{"role": "user", "content": prompt}], "context": context},
-        )
-    if resp.status_code != 200:
-        raise HTTPException(status_code=resp.status_code, detail=resp.text)
-    data = resp.json()
-    # Strip any keys/metadata
-    return {"response": data.get("choices", [{}])[0].get("message", {}).get("content", "")}
+    try:
+        messages = [{"role": "user", "content": prompt}]
+        response = await proxy_llm(messages)
+        return {"response": response}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"LLM call failed: {str(e)}")
 
 # File upload storage
-UPLOAD_DIR = Path("/app/uploads")
+UPLOAD_DIR = ROOT_DIR / "uploads"
 UPLOAD_DIR.mkdir(exist_ok=True)
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
 
@@ -368,10 +374,10 @@ async def create_session(request: Request, response: Response):
     session_id = body.get("session_id")
     if not session_id:
         raise HTTPException(status_code=400, detail="session_id required")
-    # Call Emergent Auth to get user data
+
     async with httpx.AsyncClient() as client:
         auth_response = await client.get(
-            "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data",
+
             headers={"X-Session-ID": session_id}
         )
     if auth_response.status_code != 200:
@@ -1089,61 +1095,22 @@ async def delete_file(file_id: str):
 @api_router.post("/chat", response_model=ChatResponse)
 async def chat_with_garvis(request_body: ChatRequest):
     session_id = request_body.session_id or str(uuid.uuid4())
-    
-    if session_id not in chat_sessions:
-        api_key = os.environ.get('EMERGENT_LLM_KEY')
-        if not api_key:
-            raise HTTPException(status_code=500, detail="LLM API key not configured")
-        
-        chat = LlmChat(
-            api_key=api_key,
-            session_id=session_id,
-            system_message=SYSTEM_MESSAGE
-        ).with_model("openai", "gpt-5.2")
-        
-        chat_sessions[session_id] = chat
-    
-    chat = chat_sessions[session_id]
-    
     try:
         # Build message with file attachments
         message_text = request_body.message
-        image_contents = []
-        
         if request_body.file_ids:
             document_context = []
-            
             for file_id in request_body.file_ids:
                 file_doc = await db.chat_files.find_one({"file_id": file_id})
                 if not file_doc:
                     continue
-                
-                if file_doc.get("is_image"):
-                    # Load image and convert to base64
-                    file_path = Path(file_doc["path"])
-                    if file_path.exists():
-                        with open(file_path, 'rb') as f:
-                            image_data = f.read()
-                        image_base64 = base64.b64encode(image_data).decode('utf-8')
-                        image_contents.append(ImageContent(image_base64=image_base64))
-                else:
-                    # Add document text to context
-                    if file_doc.get("extracted_text"):
-                        document_context.append(f"[Document: {file_doc['filename']}]\n{file_doc['extracted_text']}")
-            
-            # Prepend document context to message
+                if file_doc.get("extracted_text"):
+                    document_context.append(f"[Document: {file_doc['filename']}]\n{file_doc['extracted_text']}")
             if document_context:
                 context_text = "\n\n".join(document_context)
                 message_text = f"Context from uploaded documents:\n{context_text}\n\nUser question: {request_body.message}"
-        
-        # Create user message with optional images
-        if image_contents:
-            user_message = UserMessage(text=message_text, images=image_contents)
-        else:
-            user_message = UserMessage(text=message_text)
-        
-        response = await chat.send_message(user_message)
-        
+        messages = [{"role": "user", "content": message_text}]
+        response = await proxy_llm(messages)
         # Store chat history with file references
         await db.chat_history.insert_one({
             "session_id": session_id,
@@ -1158,7 +1125,6 @@ async def chat_with_garvis(request_body: ChatRequest):
             "content": response,
             "timestamp": datetime.now(timezone.utc).isoformat()
         })
-        
         return ChatResponse(response=response, session_id=session_id)
     except Exception as e:
         logger.error(f"Chat error: {e}")

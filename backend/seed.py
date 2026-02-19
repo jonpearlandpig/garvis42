@@ -138,3 +138,19 @@ async def seed_database():
     if await db.components.count_documents({}) == 0:
 
         components = []
+
+    # Seed Pig Pen operator registry
+    operators = load_pigpen_registry()
+    await db.pigpen_operators.delete_many({})  # Clear existing for dev
+    if operators:
+        for op in operators:
+            op["_id"] = op.get("id", str(uuid.uuid4()))
+            op["is_active"] = True
+        await db.pigpen_operators.insert_many(operators)
+        print(f"Seeded {len(operators)} Pig Pen operators")
+    else:
+        print("No operators found in pigpen_registry_updated.json")
+
+if __name__ == "__main__":
+    asyncio.run(seed_database())
+    print("Seed script completed.")
