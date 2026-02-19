@@ -1,10 +1,11 @@
 
+
 ## Current Status (Feb 2026)
 This is the unified Garvis full-stack repo after merging key enhancements from gogarvisplugin (LLM proxy, admin env/promotion, security headers, optional OpenClaw plugin skeleton).
 
 - Primary backend: backend/ (FastAPI + Emergent LLM + Pig Pen seeding)
 - Primary frontend: frontend/ (React dashboard)
-- Governance specs: Coming soon (folded from gogarvis PDFs)
+- Governance specs: [docs/specs/gogarvis-canonical/](docs/specs/gogarvis-canonical/) (folded from gogarvis PDFs)
 - Companion dashboard: https://github.com/jonpearlandpig/garvis-command-center (pure FE with onboarding/AKB focus)
 
 Clone this for full-stack dev/pilots. Archive/cleanup of other repos in progress.
