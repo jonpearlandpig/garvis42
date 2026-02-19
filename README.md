@@ -8,6 +8,12 @@ This is the unified Garvis full-stack repo after merging key enhancements from g
 - Governance specs: [docs/specs/gogarvis-canonical/](docs/specs/gogarvis-canonical/) (folded from gogarvis PDFs)
 - Companion dashboard: https://github.com/jonpearlandpig/garvis-command-center (pure FE with onboarding/AKB focus)
 
+
+## Companion Repos
+- Frontend-focused dashboard: https://github.com/jonpearlandpig/garvis-command-center
+- Vibe coding experiments: https://github.com/jonpearlandpig/pigpenrepo
+- Archived: gogarvisplugin, gogarvis-assistant, gogarvis (specs now in docs/specs/)
+
 Clone this for full-stack dev/pilots. Archive/cleanup of other repos in progress.
 
 # GARVIS Full Stack - Sovereign Intelligence Framework
