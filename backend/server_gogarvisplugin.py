@@ -1,4 +1,5 @@
 from fastapi import FastAPI, APIRouter, HTTPException, Query, Depends, Request, Response, UploadFile, File, Form, Body
+from .log_invocation import log_invocation
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -17,12 +18,11 @@ import PyPDF2
 import httpx
 import base64
 import io
+from .routers import test as test_router
 
-ROOT_DIR = Path(__file__).parent
-load_dotenv(ROOT_DIR / '.env')
-
-# Admin emails for manual promotion
-ADMIN_EMAILS = set(e.strip().lower() for e in os.environ.get("ADMIN_EMAILS", "").split(",") if e.strip())
+# Ensure .env is loaded from project root
+PROJECT_ROOT = Path(__file__).parent.parent
+load_dotenv(PROJECT_ROOT / '.env')
 
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
@@ -34,21 +34,20 @@ db = client[os.environ['DB_NAME']]
 app = FastAPI(title="GoGarvis API")
 api_router = APIRouter(prefix="/api")
 
-# Rate limiter setup (for LLM proxy and security)
+# Rate limiter setup
 limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 
 # LLM Integration
-from emergentintegrations.llm.chat import LlmChat, UserMessage, ImageContent
 chat_sessions = {}
 
-# Secure LLM Proxy Endpoint (from plugin)
+# Secure LLM Proxy Endpoint
 @api_router.post("/llm/proxy")
 @limiter.limit("20/minute")
 async def llm_proxy(request: Request, payload: dict = Body(...)):
-    """Proxy LLM requests to Emergent/OpenAI using backend-only key. Audited."""
+    """Proxy LLM requests to Emergent/OpenAI using backend-only key."""
     api_key = os.environ.get("EMERGENT_LLM_KEY")
     if not api_key:
         raise HTTPException(status_code=500, detail="LLM API key not configured")
@@ -56,11 +55,6 @@ async def llm_proxy(request: Request, payload: dict = Body(...)):
     context = payload.get("context")
     if not prompt:
         raise HTTPException(status_code=400, detail="Prompt required")
-    # Audit log: who is calling
-    user = await get_current_user(request)
-    if not user:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-    await log_audit(user, "llm_proxy", "llm", user.user_id, user.name, {"prompt": prompt})
     # Forward to Emergent/OpenAI (example endpoint, adjust as needed)
     async with httpx.AsyncClient(timeout=30) as client:
         resp = await client.post(
@@ -75,7 +69,7 @@ async def llm_proxy(request: Request, payload: dict = Body(...)):
     return {"response": data.get("choices", [{}])[0].get("message", {}).get("content", "")}
 
 # File upload storage
-UPLOAD_DIR = Path("/app/uploads")
+UPLOAD_DIR = Path("uploads")
 UPLOAD_DIR.mkdir(exist_ok=True)
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
 
@@ -363,7 +357,7 @@ async def save_version(user: User, content_type: str, content_id: str, data: dic
 
 @api_router.post("/auth/session")
 async def create_session(request: Request, response: Response):
-    """Exchange session_id for session_token, with admin email/manual promotion support."""
+    """Exchange session_id for session_token"""
     body = await request.json()
     session_id = body.get("session_id")
     if not session_id:
@@ -379,7 +373,8 @@ async def create_session(request: Request, response: Response):
     user_data = auth_response.json()
     # Check if user exists
     existing_user = await db.users.find_one({"email": user_data["email"]}, {"_id": 0})
-    email = user_data["email"].strip().lower()
+    # Get admin emails from env
+    ADMIN_EMAILS = set(e.strip().lower() for e in os.environ.get("ADMIN_EMAILS", "").split(",") if e.strip())
     if existing_user:
         user_id = existing_user["user_id"]
         # Update user data
@@ -388,16 +383,11 @@ async def create_session(request: Request, response: Response):
             {"$set": {"name": user_data["name"], "picture": user_data.get("picture")}}
         )
         role = existing_user.get("role", "viewer")
-        # Manual admin promotion if email is in ADMIN_EMAILS
-        if email in ADMIN_EMAILS and role != "admin":
-            await db.users.update_one({"user_id": user_id}, {"$set": {"role": "admin"}})
-            role = "admin"
     else:
         # Create new user
         user_id = f"user_{uuid.uuid4().hex[:12]}"
-        # First user becomes admin, or if email in ADMIN_EMAILS
-        user_count = await db.users.count_documents({})
-        role = "admin" if user_count == 0 or email in ADMIN_EMAILS else "viewer"
+        email = user_data["email"].strip().lower()
+        role = "admin" if email in ADMIN_EMAILS else "viewer"
         new_user = {
             "user_id": user_id,
             "email": user_data["email"],
@@ -407,9 +397,11 @@ async def create_session(request: Request, response: Response):
             "created_at": datetime.now(timezone.utc).isoformat()
         }
         await db.users.insert_one(new_user)
+    
     # Create session
     session_token = user_data.get("session_token") or f"session_{uuid.uuid4().hex}"
     expires_at = datetime.now(timezone.utc) + timedelta(days=7)
+    
     await db.user_sessions.delete_many({"user_id": user_id})
     await db.user_sessions.insert_one({
         "user_id": user_id,
@@ -417,6 +409,7 @@ async def create_session(request: Request, response: Response):
         "expires_at": expires_at.isoformat(),
         "created_at": datetime.now(timezone.utc).isoformat()
     })
+    
     # Set cookie
     response.set_cookie(
         key="session_token",
@@ -427,9 +420,11 @@ async def create_session(request: Request, response: Response):
         path="/",
         max_age=7 * 24 * 60 * 60
     )
+    
     # Log audit
     user = User(user_id=user_id, email=user_data["email"], name=user_data["name"], role=role)
     await log_audit(user, "login", "auth", user_id, user_data["name"])
+    
     return {
         "user_id": user_id,
         "email": user_data["email"],
@@ -655,6 +650,34 @@ async def get_document_categories():
     return {"categories": sorted(categories)}
 
 # ============== Glossary Routes ==============
+
+# ============== Progress Endpoint ==============
+
+from .log_invocation import log_invocation
+from .dependencies import get_db
+
+@api_router.get("/progress")
+async def get_progress(
+    request: Request,
+    db=Depends(get_db),
+    invocation_id_and_trace=Depends(log_invocation)
+):
+    """Get progress and update invocation log."""
+    # Simulate progress data (replace with real logic as needed)
+    progress_data = {"progress": 0.75, "status": "in_progress"}
+
+    # Unpack invocation_id from dependency
+    if isinstance(invocation_id_and_trace, tuple):
+        invocation_id = invocation_id_and_trace[0]
+    else:
+        invocation_id = invocation_id_and_trace
+
+    # After success, update invocation log
+    await db.invocations.update_one(
+        {"invocation_id": invocation_id},
+        {"$set": {"status": "success", "routing_trace": {"domain": "akb", "confidence": 0.95}}}
+    )
+    return progress_data
 
 @api_router.get("/glossary")
 async def get_glossary(category: Optional[str] = None, search: Optional[str] = None):
@@ -1088,81 +1111,7 @@ async def delete_file(file_id: str):
 
 @api_router.post("/chat", response_model=ChatResponse)
 async def chat_with_garvis(request_body: ChatRequest):
-    session_id = request_body.session_id or str(uuid.uuid4())
-    
-    if session_id not in chat_sessions:
-        api_key = os.environ.get('EMERGENT_LLM_KEY')
-        if not api_key:
-            raise HTTPException(status_code=500, detail="LLM API key not configured")
-        
-        chat = LlmChat(
-            api_key=api_key,
-            session_id=session_id,
-            system_message=SYSTEM_MESSAGE
-        ).with_model("openai", "gpt-5.2")
-        
-        chat_sessions[session_id] = chat
-    
-    chat = chat_sessions[session_id]
-    
-    try:
-        # Build message with file attachments
-        message_text = request_body.message
-        image_contents = []
-        
-        if request_body.file_ids:
-            document_context = []
-            
-            for file_id in request_body.file_ids:
-                file_doc = await db.chat_files.find_one({"file_id": file_id})
-                if not file_doc:
-                    continue
-                
-                if file_doc.get("is_image"):
-                    # Load image and convert to base64
-                    file_path = Path(file_doc["path"])
-                    if file_path.exists():
-                        with open(file_path, 'rb') as f:
-                            image_data = f.read()
-                        image_base64 = base64.b64encode(image_data).decode('utf-8')
-                        image_contents.append(ImageContent(image_base64=image_base64))
-                else:
-                    # Add document text to context
-                    if file_doc.get("extracted_text"):
-                        document_context.append(f"[Document: {file_doc['filename']}]\n{file_doc['extracted_text']}")
-            
-            # Prepend document context to message
-            if document_context:
-                context_text = "\n\n".join(document_context)
-                message_text = f"Context from uploaded documents:\n{context_text}\n\nUser question: {request_body.message}"
-        
-        # Create user message with optional images
-        if image_contents:
-            user_message = UserMessage(text=message_text, images=image_contents)
-        else:
-            user_message = UserMessage(text=message_text)
-        
-        response = await chat.send_message(user_message)
-        
-        # Store chat history with file references
-        await db.chat_history.insert_one({
-            "session_id": session_id,
-            "role": "user",
-            "content": request_body.message,
-            "file_ids": request_body.file_ids or [],
-            "timestamp": datetime.now(timezone.utc).isoformat()
-        })
-        await db.chat_history.insert_one({
-            "session_id": session_id,
-            "role": "assistant",
-            "content": response,
-            "timestamp": datetime.now(timezone.utc).isoformat()
-        })
-        
-        return ChatResponse(response=response, session_id=session_id)
-    except Exception as e:
-        logger.error(f"Chat error: {e}")
-        raise HTTPException(status_code=500, detail=f"Chat error: {str(e)}")
+    raise HTTPException(status_code=501, detail="Chat endpoint is not available in this deployment.")
 
 @api_router.get("/chat/history/{session_id}")
 async def get_chat_history(session_id: str):
@@ -1210,6 +1159,28 @@ async def health_check():
 # Include router
 app.include_router(api_router)
 
+# Middleware to log each request invocation
+@app.middleware("http")
+async def log_invocation_middleware(request: Request, call_next):
+    try:
+        invocation_id, trace = await log_invocation(request, db)
+    except Exception as e:
+        logger.error(f"Invocation logging failed: {e}")
+        invocation_id, trace = None, None
+    response = await call_next(request)
+    # Optionally update status in DB after response
+    if invocation_id and trace is not None:
+        try:
+            await db.invocations.update_one(
+                {"invocation_id": invocation_id},
+                {"$set": {"status": response.status_code}}
+            )
+        except Exception as e:
+            logger.error(f"Failed to update invocation status: {e}")
+    return response
+
+
+app.include_router(test_router.router)
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,

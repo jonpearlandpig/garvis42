@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:6
+    container_name: gogarvis-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - gogarvis-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: gogarvis-backend
+    ports:
+      - "8001:8001"
+    environment:
+      - MONGO_URL=mongodb://mongodb:27017
+      - DB_NAME=gogarvis
+      - CORS_ORIGINS=http://localhost:3000
+      - EMERGENT_LLM_KEY=${EMERGENT_LLM_KEY:-}
+    depends_on:
+      - mongodb
+    networks:
+      - gogarvis-network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: gogarvis-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_BACKEND_URL=http://localhost:8001
+    depends_on:
+      - backend
+    networks:
+      - gogarvis-network
+    restart: unless-stopped
+
+volumes:
+  mongo_data:
+
+networks:
+  gogarvis-network:
+    driver: bridge

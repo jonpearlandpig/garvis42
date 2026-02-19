@@ -9,44 +9,33 @@ SYSTEM_CONFIG = {
     "name": "GOGARVIS",
     "tagline": "Sovereign Intelligence Framework",
     "version": "2.0.0",
-
+    
     # Ownership
     "owner": "Pearl & Pig",
     "owner_id": "TSID-0001",
     "owner_url": "https://pearlandpig.com",
-
+    
     # Visual Identity (defaults - can be overridden via Brand Profiles)
     "primary_color": "#FF4500",
     "secondary_color": "#1A1A1A",
     "font_heading": "JetBrains Mono",
     "font_body": "Manrope",
-
+    
     # Feature Flags
     "features": {
         "ai_chat": True,
         "version_history": True,
         "audit_log": True,
         "google_auth": True,
-        # Plugin: LLM proxy can be toggled
-        "llm_proxy_enabled": True,
     },
-
+    
     # AI Configuration
     "ai": {
         "provider": "openai",
         "model": "gpt-5.2",
         "assistant_name": "GARVIS AI",
-        # Plugin: LLM proxy endpoint (if used)
-        "llm_proxy_url": "/api/llm/proxy",
     },
-
-    # Admin/Promotion (from plugin)
-    "admin": {
-        # Comma-separated list of admin emails for manual promotion
-        "admin_emails_env": "ADMIN_EMAILS",
-        "manual_promotion": True,
-    },
-
+    
     # Authority Hierarchy Labels (customize for your domain)
     "authority_layers": [
         {"id": "sovereign", "name": "SOVEREIGN AUTHORITY", "description": "Constitutional control"},
@@ -58,7 +47,7 @@ SYSTEM_CONFIG = {
         {"id": "execution", "name": "TELA", "description": "Execution layer"},
         {"id": "audit", "name": "AUDIT LEDGER", "description": "Immutable log"},
     ],
-
+    
     # Operator Categories (customize for your domain)
     "operator_categories": [
         "Core Resolution",

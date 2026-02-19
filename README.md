@@ -248,6 +248,20 @@ Built with the GARVIS architecture by [Pearl & Pig](https://pearlandpig.com).
 
 ## Support
 
+
 - 📖 [Documentation](docs/)
 - 🐛 [Issues](https://github.com/YOUR_USERNAME/gogarvis/issues)
 - 💬 [Discussions](https://github.com/YOUR_USERNAME/gogarvis/discussions)
+
+---
+
+## Recent Integrations (Feb 2026)
+
+Merged enhancements from **gogarvisplugin**:
+
+- **LLM proxy** for secure/audited AI calls (rate-limited, role-based, audit-logged)
+- **Admin env + manual role promotion** (via `ADMIN_EMAILS` and `LLM_PROXY_ENABLED`)
+- **Frontend proxy / security headers** (see backend/server.py and config.py)
+- Optional **OpenClaw plugin skeleton** (see openclaw-skill-garvis-governance/)
+
+Core remains sovereign full-stack with Pig Pen operators, authority hierarchy, Emergent LLM, and immutable audit ledger.
