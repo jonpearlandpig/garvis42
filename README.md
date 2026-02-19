@@ -14,6 +14,15 @@ This is the unified Garvis full-stack repo after merging key enhancements from g
 - Vibe coding experiments: https://github.com/jonpearlandpig/pigpenrepo
 - Archived: gogarvisplugin, gogarvis-assistant, gogarvis (specs now in docs/specs/)
 
+
+## Governance Rules
+Canonical specs folded from gogarvis:
+- Pig Pen Operator Registry: [docs/specs/gogarvis-canonical/3.1_pig_pen__canonical_operator_registry_(telauthorium-locked).pdf](docs/specs/gogarvis-canonical/3.1_pig_pen__canonical_operator_registry_(telauthorium-locked).pdf)
+- Telauthorium Enforcement: [docs/specs/gogarvis-canonical/2.2_garvis__telauthorium__enforcement_contract__engineering_specification.pdf](docs/specs/gogarvis-canonical/2.2_garvis__telauthorium__enforcement_contract__engineering_specification.pdf)
+- Audit Ledger: [docs/specs/gogarvis-canonical/5.1_audit__event_ledger__canonical_specification.pdf](docs/specs/gogarvis-canonical/5.1_audit__event_ledger__canonical_specification.pdf)
+- Failure Halt Protocol: [docs/specs/gogarvis-canonical/Failure_Halt__Re-Authorization_Protocol.pdf](docs/specs/gogarvis-canonical/Failure_Halt__Re-Authorization_Protocol.pdf)
+Why revenue? Makes immutable rules/audits demo-ready in one repo—builds trust in sovereignty/human-first for $8k+ pilots.
+
 Clone this for full-stack dev/pilots. Archive/cleanup of other repos in progress.
 
 # GARVIS Full Stack - Sovereign Intelligence Framework
