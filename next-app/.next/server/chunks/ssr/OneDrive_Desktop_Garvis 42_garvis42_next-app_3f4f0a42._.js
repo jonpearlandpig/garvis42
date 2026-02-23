@@ -1,0 +1,3 @@
+module.exports=[65156,a=>{a.n(a.i(11729))},61839,a=>{a.n(a.i(35543))},94052,a=>{a.n(a.i(39643))},29598,a=>{a.n(a.i(52197))},19130,a=>{a.n(a.i(76951))},52197,(a,b,c)=>{"use strict";Object.defineProperty(c,"__esModule",{value:!0}),Object.defineProperty(c,"default",{enumerable:!0,get:function(){return f}});let d=a.r(25565),e=a.r(51190);function f(){return(0,d.jsx)(e.HTTPAccessErrorFallback,{status:401,message:"You're not authorized to access this page."})}("function"==typeof c.default||"object"==typeof c.default&&null!==c.default)&&void 0===c.default.__esModule&&(Object.defineProperty(c.default,"__esModule",{value:!0}),Object.assign(c.default,c),b.exports=c.default)}];
+
+//# sourceMappingURL=OneDrive_Desktop_Garvis%2042_garvis42_next-app_3f4f0a42._.js.map
