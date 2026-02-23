@@ -1,0 +1,1 @@
+Move your component files here from CRA src/components.

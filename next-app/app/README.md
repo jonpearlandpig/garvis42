@@ -1,0 +1,1 @@
+Move your route files here. Each folder in /app becomes a route in Next.js App Router.
