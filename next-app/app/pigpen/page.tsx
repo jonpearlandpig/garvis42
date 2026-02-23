@@ -4,7 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
+
 import { ChevronRight, Search } from "lucide-react";
+import dynamic from "next/dynamic";
+const DocumentHandler = dynamic(() => import("./document-handler"), { ssr: false });
 
 const operatorData = [
   { id: 1, name: "Alice Smith", title: "Chief Architect", weight: 5, cluster: "Executive & Architecture", phases: ["SPARK", "BUILD"] },
@@ -101,6 +104,9 @@ export default function PigPenPage() {
               </AccordionItem>
             ))}
           </Accordion>
+
+          {/* Document Handler Demo */}
+          <DocumentHandler />
         </div>
       </main>
     </div>

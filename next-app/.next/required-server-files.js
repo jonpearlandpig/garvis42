@@ -294,7 +294,17 @@ self.__SERVER_FILES_MANIFEST={
     "turbopack": {
       "root": "C:\\Users\\jagbe"
     },
-    "distDirRoot": ".next"
+    "distDirRoot": ".next",
+    "_originalRewrites": {
+      "beforeFiles": [],
+      "afterFiles": [
+        {
+          "source": "/api/:path*",
+          "destination": "http://localhost:8000/api/:path*"
+        }
+      ],
+      "fallback": []
+    }
   },
   "appDir": "C:\\Users\\jagbe\\OneDrive\\Desktop\\Garvis 42\\garvis42\\next-app",
   "relativeAppDir": "OneDrive\\Desktop\\Garvis 42\\garvis42\\next-app",
