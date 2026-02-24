@@ -1,0 +1,13 @@
+var R=require("../../chunks/ssr/[turbopack]_runtime.js")("server/app/_not-found/page.js")
+R.c("server/chunks/ssr/OneDrive_Desktop_Garvis 42_garvis42_next-app_3f4f0a42._.js")
+R.c("server/chunks/ssr/[root-of-the-server]__d6653a8b._.js")
+R.c("server/chunks/ssr/5cbde_next_dist_esm_build_templates_app-page_729f12d3.js")
+R.c("server/chunks/ssr/[root-of-the-server]__0aee6253._.js")
+R.c("server/chunks/ssr/[root-of-the-server]__6eb0893e._.js")
+R.c("server/chunks/ssr/[root-of-the-server]__c61b761d._.js")
+R.c("server/chunks/ssr/OneDrive_Desktop_Garvis 42_garvis42_next-app_app_layout_tsx_0bb94c41._.js")
+R.c("server/chunks/ssr/5cbde_next_dist_client_components_0c060992._.js")
+R.c("server/chunks/ssr/5cbde_next_dist_client_components_builtin_forbidden_7d63da6d.js")
+R.c("server/chunks/ssr/7951e_garvis42_next-app__next-internal_server_app__not-found_page_actions_bd42a5d5.js")
+R.m(92204)
+module.exports=R.m(92204).exports

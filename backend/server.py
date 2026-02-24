@@ -1187,6 +1187,15 @@ app.add_middleware(
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
+
+# Auto-run seed.py on backend start (for Docker Compose demo)
+if __name__ == "__main__":
+    import asyncio
+    from seed import seed_database  # Import your seed function
+    asyncio.run(seed_database())    # Run seed on startup
+    import uvicorn
+    uvicorn.run("server:app", host="0.0.0.0", port=8000, reload=True)

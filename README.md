@@ -1,4 +1,29 @@
 
+# Garvis Demo
+
+## One-Command Local Install
+
+1. Install Docker Desktop: https://www.docker.com/products/docker-desktop/
+2. Clone repo:
+    ```sh
+    git clone https://github.com/jonpearlandpig/garvis42.git
+    cd garvis42
+    ```
+3. Start everything:
+    ```sh
+    docker compose up -d --build
+    ```
+4. Open in browser:
+    - Frontend UI: http://localhost:5173
+    - Backend API docs: http://localhost:8000/docs
+
+Stop with:
+```sh
+docker compose down
+```
+
+This runs the full demo (React UI + FastAPI backend + MongoDB) with one command.
+
 
 ## Current Status (Feb 2026)
 This is the unified Garvis full-stack repo after merging key enhancements from gogarvisplugin (LLM proxy, admin env/promotion, security headers, optional OpenClaw plugin skeleton).

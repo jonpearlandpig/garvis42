@@ -1,52 +1,44 @@
 version: '3.8'
 
 services:
-  mongodb:
-    image: mongo:6
-    container_name: gogarvis-mongo
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
     ports:
       - "27017:27017"
     volumes:
-      - mongo_data:/data/db
-    networks:
-      - gogarvis-network
+      - mongo-data:/data/db
 
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: gogarvis-backend
-    ports:
-      - "8001:8001"
-    environment:
-      - MONGO_URL=mongodb://mongodb:27017
-      - DB_NAME=gogarvis
-      - CORS_ORIGINS=http://localhost:3000
-      - EMERGENT_LLM_KEY=${EMERGENT_LLM_KEY:-}
-    depends_on:
-      - mongodb
-    networks:
-      - gogarvis-network
     restart: unless-stopped
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mongo
+    environment:
+      - MONGO_URI=mongodb://mongo:27017
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./backend:/app
+    command: uvicorn server:app --host 0.0.0.0 --port 8000 --reload
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: gogarvis-frontend
+    restart: unless-stopped
     ports:
-      - "3000:3000"
-    environment:
-      - REACT_APP_BACKEND_URL=http://localhost:8001
+      - "5173:5173"
     depends_on:
       - backend
-    networks:
-      - gogarvis-network
-    restart: unless-stopped
+    environment:
+      - VITE_API_URL=http://backend:8000
+    volumes:
+      - ./frontend:/app
+    command: npm run dev
 
 volumes:
-  mongo_data:
-
-networks:
-  gogarvis-network:
-    driver: bridge
+  mongo-data:
