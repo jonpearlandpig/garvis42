@@ -1,0 +1,3 @@
+# ...existing code...
+# Patch bundle prompt loader
+# See patch bundle for full implementation

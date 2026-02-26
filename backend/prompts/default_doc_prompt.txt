@@ -1,0 +1,7 @@
+Generate a descriptive document for AKB '{akb_name}' owned by '{owner}'.
+Context provided:
+- Entries count: {entries_count}
+- Linked AKBs access: {linked_akbs_access}
+- Primary Sources: {sources}
+
+Structure the output with sections for 'AI Content' and 'Explainability'.

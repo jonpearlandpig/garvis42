@@ -3,8 +3,11 @@
 # For the PoC, it's not used directly.
 
 import sqlite3
+import json
 from typing import List, Dict, Optional
-from .models import AKB, AuditLog, CACPolicy, AKBEntry
+from datetime import datetime
+import uuid
+from .models import AKB, AuditLog, CACPolicy
 
 class PersistenceLayer:
     def __init__(self, db_path: str = ":memory:"):
@@ -16,9 +19,9 @@ class PersistenceLayer:
             self.conn = sqlite3.connect(self.db_path)
             self.conn.row_factory = sqlite3.Row # Return rows as dict-like objects
             self._create_tables()
-            print(f"Connected to persistence layer: {self.db_path}")
+            print(f"Persistence layer connected to: {self.db_path}")
         except Exception as e:
-            print(f"Error connecting to database: {e}")
+            print(f"Error connecting to database '{self.db_path}': {e}")
             raise
 
     def _create_tables(self):
@@ -40,22 +43,23 @@ class PersistenceLayer:
                 id TEXT PRIMARY KEY,
                 akb_id TEXT NOT NULL,
                 key TEXT NOT NULL,
-                value TEXT, -- Store as JSON string or TEXT
+                value TEXT,
                 source TEXT,
                 source_type TEXT,
                 confidence REAL,
                 created_at TEXT,
                 version INTEGER,
-                FOREIGN KEY (akb_id) REFERENCES akbs(id)
+                FOREIGN KEY (akb_id) REFERENCES akbs(id) ON DELETE CASCADE
             )
         """)
         # CAC Policy Table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS cac_policies (
                 akb_id TEXT PRIMARY KEY,
-                allowed_akb_ids TEXT, -- Store as JSON array string
+                allowed_akb_ids TEXT,
                 allow_cross_akb BOOLEAN,
-                FOREIGN KEY (akb_id) REFERENCES akbs(id)
+                policy_name TEXT,
+                FOREIGN KEY (akb_id) REFERENCES akbs(id) ON DELETE CASCADE
             )
         """)
         # Audit Log Table
@@ -77,44 +81,32 @@ class PersistenceLayer:
     def save_akb(self, akb: AKB):
         if not self.conn: raise RuntimeError("Database not connected.")
         cursor = self.conn.cursor()
-
-        # Save main AKB data
         cursor.execute("""
             INSERT OR REPLACE INTO akbs (id, name, owner, created_at, updated_at)
             VALUES (?, ?, ?, ?, ?)
         """, (akb.id, akb.name, akb.owner, akb.created_at.isoformat(), akb.updated_at.isoformat()))
-
-        # Save/Update entries (handle entry versions/updates carefully)
-        cursor.execute("DELETE FROM akb_entries WHERE akb_id = ?", (akb.id,)) # Simple clear & re-add for MVP
+        cursor.execute("DELETE FROM akb_entries WHERE akb_id = ?", (akb.id,))
         for entry in akb.entries:
             cursor.execute("""
                 INSERT INTO akb_entries (id, akb_id, key, value, source, source_type, confidence, created_at, version)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (str(uuid.uuid4()), akb.id, entry.key, entry.value, entry.source, entry.source_type, entry.confidence, entry.created_at.isoformat(), entry.version))
-
-        # Save CAC policy
-        cac_policy = CAC_STORE.get(akb.id) # Assuming CAC_STORE reflects current policies
-        if cac_policy:
-            cursor.execute("""
-                INSERT OR REPLACE INTO cac_policies (akb_id, allowed_akb_ids, allow_cross_akb)
-                VALUES (?, ?, ?)
-            """, (akb.id, json.dumps(cac_policy.allowed_akb_ids), cac_policy.allow_cross_akb))
-
+        cac_policy = CAC_STORE.get(akb.id, CACPolicy())
+        cursor.execute("""
+            INSERT OR REPLACE INTO cac_policies (akb_id, allowed_akb_ids, allow_cross_akb, policy_name)
+            VALUES (?, ?, ?, ?)
+        """, (akb.id, json.dumps(cac_policy.allowed_akb_ids), cac_policy.allow_cross_akb, cac_policy.policy_name))
         self.conn.commit()
 
     def get_akb(self, akb_id: str) -> Optional[AKB]:
         if not self.conn: raise RuntimeError("Database not connected.")
         cursor = self.conn.cursor()
-
         cursor.execute("SELECT * FROM akbs WHERE id = ?", (akb_id,))
         akb_row = cursor.fetchone()
         if not akb_row: return None
-
         akb_data = dict(akb_row)
         akb_data['created_at'] = datetime.fromisoformat(akb_data['created_at'])
         akb_data['updated_at'] = datetime.fromisoformat(akb_data['updated_at'])
-
-        # Load entries
         cursor.execute("SELECT * FROM akb_entries WHERE akb_id = ?", (akb_id,))
         entries_rows = cursor.fetchall()
         akb_data['entries'] = []
@@ -123,24 +115,36 @@ class PersistenceLayer:
                 entry_data = dict(entry_row)
                 entry_data['created_at'] = datetime.fromisoformat(entry_data['created_at'])
                 akb_data['entries'].append(AKBEntry(**entry_data))
-
-        # Load CAC policy
         cursor.execute("SELECT * FROM cac_policies WHERE akb_id = ?", (akb_id,))
         policy_row = cursor.fetchone()
         if policy_row:
-            cac_data = dict(policy_row)
-            cac_data['allowed_akb_ids'] = json.loads(cac_data.get('allowed_akb_ids', '[]'))
-            cac_policy = CACPolicy(**cac_data)
-            CAC_STORE[akb_id] = cac_policy # Update global store
+            policy_data = dict(policy_row)
+            policy_data['allowed_akb_ids'] = json.loads(policy_data.get('allowed_akb_ids', '[]'))
+            cac_policy = CACPolicy(**policy_data)
+            CAC_STORE[akb_id] = cac_policy
             akb_data['cac_policy'] = cac_policy
-
         return AKB(**akb_data)
+
+    def get_all_akbs(self) -> List[AKB]:
+        if not self.conn: raise RuntimeError("Database not connected.")
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT id FROM akbs")
+        akb_ids = [row['id'] for row in cursor.fetchall()]
+        return [self.get_akb(akb_id) for akb_id in akb_ids if self.get_akb(akb_id)]
+
+    def get_cac_policy_for_akb(self, akb_id: str) -> Optional[CACPolicy]:
+        if not self.conn: raise RuntimeError("Database not connected.")
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT * FROM cac_policies WHERE akb_id = ?", (akb_id,))
+        policy_row = cursor.fetchone()
+        if policy_row:
+            policy_data = dict(policy_row)
+            policy_data['allowed_akb_ids'] = json.loads(policy_data.get('allowed_akb_ids', '[]'))
+            return CACPolicy(**policy_data)
+        return None
 
     def append_audit(self, entry_data: dict):
         if not self.conn: raise RuntimeError("Database not connected.")
-        # Audit log is generally append-only and very simple inserts
-        # This function assumes entry_data is already formatted (e.g. has id, timestamp, detail, etc.)
-        # and validated by Pydantic in the main router.
         cursor = self.conn.cursor()
         try:
             cursor.execute("""
@@ -163,11 +167,8 @@ class PersistenceLayer:
             print("Persistence layer connection closed.")
 
 # Global instance (will default to in-memory for PoC)
-PERSISTENCE = PersistenceLayer(db_path=":memory:") # ':memory:' for in-memory; 'audits.db' for SQLite file
-
-def get_persistence_layer():
-    """Dependency injection for persistence layer."""
-    # In a real app, you might handle connection pooling and ensure it's initialized
+PERSISTENCE = PersistenceLayer(db_path=":memory:")
+def get_persistence_layer() -> PersistenceLayer:
     if not PERSISTENCE.conn:
         PERSISTENCE.connect()
     return PERSISTENCE

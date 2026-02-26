@@ -1,6 +1,7 @@
 # backend/llm_adapters.py
 from typing import List, Dict, Any, Optional
 from abc import ABC, abstractmethod
+import json
 
 class LLMAdapter(ABC):
     """Abstract base class for LLM adapters."""
@@ -30,7 +31,7 @@ class OpenAIAdapter(LLMAdapter):
         sources = context_data.get("sources", ["external_data"]) if context_data else ["external_data"]
         return {
             "text": f"Mock OpenAI-like output for prompt: '{prompt}'. Context sources: {', '.join(sources)}",
-            "sources": sources + [self.name],
+            "sources": sources + [self.name + f" ({self.model_name})"],
             "confidence": 0.85 # Mock confidence score
         }
 
@@ -53,7 +54,7 @@ class AdapterDispatcher:
     def __init__(self):
         # Instantiate adapters. API keys should be managed securely (e.g., env vars).
         self.adapters: Dict[str, LLMAdapter] = {
-            "openai_like": OpenAIAdapter(api_key="DUMMY_API_KEY_FOR_DEMO"), # Use dummy key for demo
+            "openai_like": OpenAIAdapter(model_name="gpt-3.5-turbo"),
             "local_mock": LocalMockAdapter()
         }
         self.default_adapter_key = "local_mock" # Fallback to mock if not specified
@@ -70,18 +71,17 @@ class AdapterDispatcher:
         """Returns a dict of adapter keys and their descriptions."""
         return {key: adapter.description for key, adapter in self.adapters.items()}
 
+    def get_current_adapter_key(self) -> str:
+        """Returns the currently selected adapter key."""
+        return self.selected_adapter_key
+
     def generate(self, prompt: str, context_data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         adapter = self.adapters.get(self.selected_adapter_key)
         if not adapter:
-            adapter = self.adapters[self.default_adapter_key] # Fallback
-
-        if not adapter: # Should not happen if default_adapter_key is valid
-             raise RuntimeError("No LLM adapters available.")
-
+            adapter = self.adapters.get(self.default_adapter_key)
+            if not adapter:
+                raise RuntimeError("No LLM adapters available.")
         return adapter.generate(prompt, context_data)
 
 # Initialize dispatcher
 LLM_DISPATCHER = AdapterDispatcher()
-
-# Example of how you might set the adapter via runtime config or an API call
-# LLM_DISPATCHER.set_adapter("openai_like")
