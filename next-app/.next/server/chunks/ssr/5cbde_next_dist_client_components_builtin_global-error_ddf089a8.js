@@ -1,3 +1,0 @@
-module.exports=[15886,(a,b,c)=>{let{createClientModuleProxy:d}=a.r(90645);a.n(d("[project]/OneDrive/Desktop/Garvis 42/garvis42/next-app/node_modules/next/dist/client/components/builtin/global-error.js <module evaluation>"))},10840,(a,b,c)=>{let{createClientModuleProxy:d}=a.r(90645);a.n(d("[project]/OneDrive/Desktop/Garvis 42/garvis42/next-app/node_modules/next/dist/client/components/builtin/global-error.js"))},76951,a=>{"use strict";a.i(15886);var b=a.i(10840);a.n(b)}];
-
-//# sourceMappingURL=5cbde_next_dist_client_components_builtin_global-error_ddf089a8.js.map

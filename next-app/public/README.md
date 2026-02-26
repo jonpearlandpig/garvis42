@@ -1,1 +1,0 @@
-Move your public assets here from CRA public/.

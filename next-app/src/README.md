@@ -1,1 +1,0 @@
-Move your source files here. Use /src for components, hooks, lib, styles.
