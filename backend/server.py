@@ -1174,7 +1174,14 @@ async def health_check():
     return {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}
 
 # Include router
+
+
+# Import and include the operators and invocations routers
+from routers.operators import router as operators_router
+from routers.invocations import router as invocations_router
 app.include_router(api_router)
+app.include_router(operators_router)
+app.include_router(invocations_router)
 
 app.add_middleware(
     CORSMiddleware,

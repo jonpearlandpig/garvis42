@@ -3,7 +3,14 @@
     "id": "[project]/OneDrive/Desktop/Garvis 42/garvis42/next-app/app/pigpen/document-handler.tsx [app-client] (ecmascript, next/dynamic entry)",
     "files": [
       "static/chunks/13466_Desktop_Garvis 42_garvis42_next-app_app_pigpen_document-handler_tsx_df9bd1cc._.js",
-      "static/chunks/13466_Desktop_Garvis 42_garvis42_next-app_app_pigpen_document-handler_tsx_c3a19048._.js"
+      "static/chunks/13466_Desktop_Garvis 42_garvis42_next-app_app_pigpen_document-handler_tsx_75907cf3._.js"
+    ]
+  },
+  "[project]/OneDrive/Desktop/Garvis 42/garvis42/next-app/app/pigpen/trace-panel.tsx [app-client] (ecmascript, next/dynamic entry)": {
+    "id": "[project]/OneDrive/Desktop/Garvis 42/garvis42/next-app/app/pigpen/trace-panel.tsx [app-client] (ecmascript, next/dynamic entry)",
+    "files": [
+      "static/chunks/OneDrive_Desktop_Garvis 42_garvis42_next-app_app_pigpen_trace-panel_tsx_1741a0ff._.js",
+      "static/chunks/OneDrive_Desktop_Garvis 42_garvis42_next-app_app_pigpen_trace-panel_tsx_75907cf3._.js"
     ]
   }
 }

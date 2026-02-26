@@ -6,21 +6,21 @@ import { Input } from "@/components/ui/input";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 
 import { ChevronRight, Search } from "lucide-react";
+
 import dynamic from "next/dynamic";
 const DocumentHandler = dynamic(() => import("./document-handler"), { ssr: false });
+const TracePanel = dynamic(() => import("./trace-panel"), { ssr: false });
 
-const operatorData = [
-  { id: 1, name: "Alice Smith", title: "Chief Architect", weight: 5, cluster: "Executive & Architecture", phases: ["SPARK", "BUILD"] },
-  { id: 2, name: "Bob Lee", title: "Creative Director", weight: 4, cluster: "Creative Engine", phases: ["BUILD", "LAUNCH"] },
-  { id: 3, name: "Carol Jones", title: "Lead Engineer", weight: 5, cluster: "Executive & Architecture", phases: ["SPARK", "BUILD", "EXPAND"] },
-  { id: 4, name: "David Kim", title: "UX Designer", weight: 3, cluster: "Creative Engine", phases: ["BUILD"] },
-  { id: 5, name: "Eve Turner", title: "QA Lead", weight: 2, cluster: "Creative Engine", phases: ["LAUNCH", "EVERGREEN"] },
-  { id: 6, name: "Frank Wu", title: "DevOps", weight: 4, cluster: "Executive & Architecture", phases: ["EXPAND"] },
-  { id: 7, name: "Grace Lin", title: "Product Owner", weight: 5, cluster: "Executive & Architecture", phases: ["SPARK", "BUILD", "LAUNCH"] },
-  { id: 8, name: "Henry Ford", title: "Copywriter", weight: 2, cluster: "Creative Engine", phases: ["SPARK"] },
-  { id: 9, name: "Ivy Chen", title: "Marketing", weight: 3, cluster: "Creative Engine", phases: ["EXPAND", "EVERGREEN"] },
-  { id: 10, name: "Jack Black", title: "Support", weight: 1, cluster: "Creative Engine", phases: ["EVERGREEN"] },
-];
+
+import { useEffect, useState } from "react";
+
+const [operatorData, setOperatorData] = useState([]);
+
+useEffect(() => {
+  fetch('/api/pigpen')
+    .then(res => res.json())
+    .then(data => setOperatorData(data));
+}, []);
 
 const clusters = [
   "Executive & Architecture",
@@ -107,6 +107,9 @@ export default function PigPenPage() {
 
           {/* Document Handler Demo */}
           <DocumentHandler />
+
+          {/* Routing Trace Visualization */}
+          <TracePanel />
         </div>
       </main>
     </div>
