@@ -93,6 +93,14 @@ pymongo>=4.5.0,<5.0
 pyparsing>=3.3.2,<4.0
 PyPDF2>=3.0.1,<4.0
 pytest>=9.0.2,<10.0
+pytest-asyncio
+httpx
+fastapi
+uvicorn
+pydantic[email] # For potential email field validation if needed later
+
+# Add these if you plan to swap to SQLite later for persistence
+# sqlite3 # Python's built-in, no extra install needed for basic use
 python-dateutil>=2.9.0.post0,<3.0
 python-dotenv>=1.2.1,<2.0
 python-jose>=3.5.0,<4.0

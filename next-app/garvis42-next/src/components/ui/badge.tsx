@@ -1,4 +1,3 @@
-import { cn } from "@/src/utils/utils";
 import * as React from "react";
 
 export function Badge({ className = "", ...props }: React.HTMLAttributes<HTMLSpanElement>) {

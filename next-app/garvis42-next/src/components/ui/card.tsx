@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { cn } from "@/src/utils/utils";
+export function Card({ className = "", ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return <div className={`rounded-xl shadow-sm ${className}`} {...props} />;
 }
 export function CardHeader({ className = "", ...props }: React.HTMLAttributes<HTMLDivElement>) {

@@ -29,22 +29,25 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
-
 # Create the main app
 app = FastAPI(title="GoGarvis API")
 api_router = APIRouter(prefix="/api")
+
+# Import modular routers
+from .routers import items, users, auth
+api_router.include_router(items.router)
+api_router.include_router(users.router)
+api_router.include_router(auth.router)
 
 # Rate limiter setup (for LLM proxy and security)
 limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-
 # LLM Integration
 from litellm import acompletion  # Async completion for FastAPI
 
 chat_sessions = {}
-
 
 # Unified LLM proxy using LiteLLM
 async def proxy_llm(messages: list, model: str = "anthropic/claude-3-5-sonnet-20241022", **kwargs):

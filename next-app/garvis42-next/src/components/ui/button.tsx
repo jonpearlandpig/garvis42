@@ -7,6 +7,5 @@ export function Button({ className = "", variant = "solid", ...props }: React.Bu
     outline: "border border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-black bg-transparent",
     ghost: "bg-transparent hover:bg-neutral-800 text-white"
   };
-  import { cn } from "@/src/utils/utils";
   return <button className={`${base} ${variants[variant]} ${className}`} {...props} />;
 }
