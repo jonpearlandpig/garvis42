@@ -1,8 +1,8 @@
 "use client";
 import { useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/src/components/ui/button";
+import { Input } from "@/src/components/ui/input";
+import { Card, CardHeader, CardTitle, CardContent } from "@/src/components/ui/card";
 
 export default function DocumentHandler() {
   const fileInput = useRef<HTMLInputElement>(null);
