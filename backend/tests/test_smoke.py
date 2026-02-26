@@ -1,6 +1,6 @@
 # backend/tests/test_smoke.py
 from fastapi.testclient import TestClient
-from main import app
+from backend.main import app
 import json
 
 client = TestClient(app)
