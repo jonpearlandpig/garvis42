@@ -50,7 +50,8 @@
  {"id": "FP-AI-048", "name": "Elias Ward", "title": "AI Systems Engineer", "decision_weight": 4, "focus_areas": ["Multi-model orchestration", "Routing logic", "Token efficiency", "Guardrail layering", "Provider abstraction"], "cluster": "Technology"},
  {"id": "FP-DO-049", "name": "Mira Kovacs", "title": "DevOps Engineer", "decision_weight": 4, "focus_areas": ["Cloud infrastructure", "CI/CD pipelines", "Environment isolation", "Monitoring systems", "Cost optimization"], "cluster": "Technology"},
  {"id": "FP-SC-050", "name": "Dr. Imani Okoye", "title": "Security Engineer — Governance", "decision_weight": 4, "focus_areas": ["RBAC enforcement", "Encryption standards", "Secrets management", "Audit trails", "Zero-trust architecture"], "cluster": "Security"},
- {"id": "FP-SC-051", "name": "Caleb Wright", "title": "Security Engineer — Regulatory", "decision_weight": 4, "focus_areas": ["SOC2 readiness", "GDPR alignment", "Data residency", "Vendor risk", "Compliance documentation"], "cluster": "Security"}
+ {"id": "FP-SC-051", "name": "Caleb Wright", "title": "Security Engineer — Regulatory", "decision_weight": 4, "focus_areas": ["SOC2 readiness", "GDPR alignment", "Data residency", "Vendor risk", "Compliance documentation"], "cluster": "Security"},
+ {"id": "PP-052", "name": "DocHandler", "title": "Document Processor", "decision_weight": 3, "focus_areas": ["CREATE", "READ", "EDIT", "PDF", "DOC", "EXCEL"], "cluster": "Data & Integrity", "authority": "Decision Weight: 3", "status": "LOCKED", "category": "Data & Integrity", "behavioral_traits": "Accurate manipulator; Preserve format", "invocation_triggers": "Documents need handling", "is_canonical": true}
  ],
  "cluster_index": {
  "Command": ["FP-JH-001", "FP-TM-002"],

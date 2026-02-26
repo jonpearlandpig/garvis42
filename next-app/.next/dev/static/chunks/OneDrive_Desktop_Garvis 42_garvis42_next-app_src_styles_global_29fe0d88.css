@@ -281,12 +281,16 @@ img, video {
   margin-right: .5rem;
 }
 
+.mt-2 {
+  margin-top: .5rem;
+}
+
 .mt-8 {
   margin-top: 2rem;
 }
 
-.mt-2 {
-  margin-top: .5rem;
+.ml-4 {
+  margin-left: 1rem;
 }
 
 .inline-block {
@@ -677,6 +681,11 @@ img, video {
 .text-white {
   --tw-text-opacity: 1;
   color: rgb(255 255 255 / var(--tw-text-opacity));
+}
+
+.text-neutral-200 {
+  --tw-text-opacity: 1;
+  color: rgb(229 229 229 / var(--tw-text-opacity));
 }
 
 .underline {

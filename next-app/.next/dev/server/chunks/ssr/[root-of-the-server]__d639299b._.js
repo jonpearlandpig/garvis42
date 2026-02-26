@@ -211,6 +211,8 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$OneDrive$2f$Desktop$2f$Garvi
 var __TURBOPACK__imported__module__$5b$project$5d2f$OneDrive$2f$Desktop$2f$Garvis__42$2f$garvis42$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chevron$2d$right$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__ChevronRight$3e$__ = __turbopack_context__.i("[project]/OneDrive/Desktop/Garvis 42/garvis42/node_modules/lucide-react/dist/esm/icons/chevron-right.js [app-ssr] (ecmascript) <export default as ChevronRight>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$OneDrive$2f$Desktop$2f$Garvis__42$2f$garvis42$2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$search$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Search$3e$__ = __turbopack_context__.i("[project]/OneDrive/Desktop/Garvis 42/garvis42/node_modules/lucide-react/dist/esm/icons/search.js [app-ssr] (ecmascript) <export default as Search>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$OneDrive$2f$Desktop$2f$Garvis__42$2f$garvis42$2f$next$2d$app$2f$node_modules$2f$next$2f$dist$2f$shared$2f$lib$2f$app$2d$dynamic$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/OneDrive/Desktop/Garvis 42/garvis42/next-app/node_modules/next/dist/shared/lib/app-dynamic.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$OneDrive$2f$Desktop$2f$Garvis__42$2f$garvis42$2f$next$2d$app$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/OneDrive/Desktop/Garvis 42/garvis42/next-app/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react.js [app-ssr] (ecmascript)");
+;
 ;
 "use client";
 ;
@@ -229,116 +231,19 @@ const DocumentHandler = (0, __TURBOPACK__imported__module__$5b$project$5d2f$OneD
     },
     ssr: false
 });
-const operatorData = [
-    {
-        id: 1,
-        name: "Alice Smith",
-        title: "Chief Architect",
-        weight: 5,
-        cluster: "Executive & Architecture",
-        phases: [
-            "SPARK",
-            "BUILD"
+const TracePanel = (0, __TURBOPACK__imported__module__$5b$project$5d2f$OneDrive$2f$Desktop$2f$Garvis__42$2f$garvis42$2f$next$2d$app$2f$node_modules$2f$next$2f$dist$2f$shared$2f$lib$2f$app$2d$dynamic$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"])(async ()=>{}, {
+    loadableGenerated: {
+        modules: [
+            "[project]/OneDrive/Desktop/Garvis 42/garvis42/next-app/app/pigpen/trace-panel.tsx [app-client] (ecmascript, next/dynamic entry)"
         ]
     },
-    {
-        id: 2,
-        name: "Bob Lee",
-        title: "Creative Director",
-        weight: 4,
-        cluster: "Creative Engine",
-        phases: [
-            "BUILD",
-            "LAUNCH"
-        ]
-    },
-    {
-        id: 3,
-        name: "Carol Jones",
-        title: "Lead Engineer",
-        weight: 5,
-        cluster: "Executive & Architecture",
-        phases: [
-            "SPARK",
-            "BUILD",
-            "EXPAND"
-        ]
-    },
-    {
-        id: 4,
-        name: "David Kim",
-        title: "UX Designer",
-        weight: 3,
-        cluster: "Creative Engine",
-        phases: [
-            "BUILD"
-        ]
-    },
-    {
-        id: 5,
-        name: "Eve Turner",
-        title: "QA Lead",
-        weight: 2,
-        cluster: "Creative Engine",
-        phases: [
-            "LAUNCH",
-            "EVERGREEN"
-        ]
-    },
-    {
-        id: 6,
-        name: "Frank Wu",
-        title: "DevOps",
-        weight: 4,
-        cluster: "Executive & Architecture",
-        phases: [
-            "EXPAND"
-        ]
-    },
-    {
-        id: 7,
-        name: "Grace Lin",
-        title: "Product Owner",
-        weight: 5,
-        cluster: "Executive & Architecture",
-        phases: [
-            "SPARK",
-            "BUILD",
-            "LAUNCH"
-        ]
-    },
-    {
-        id: 8,
-        name: "Henry Ford",
-        title: "Copywriter",
-        weight: 2,
-        cluster: "Creative Engine",
-        phases: [
-            "SPARK"
-        ]
-    },
-    {
-        id: 9,
-        name: "Ivy Chen",
-        title: "Marketing",
-        weight: 3,
-        cluster: "Creative Engine",
-        phases: [
-            "EXPAND",
-            "EVERGREEN"
-        ]
-    },
-    {
-        id: 10,
-        name: "Jack Black",
-        title: "Support",
-        weight: 1,
-        cluster: "Creative Engine",
-        phases: [
-            "EVERGREEN"
-        ]
-    }
-];
+    ssr: false
+});
+;
+const [operatorData, setOperatorData] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$OneDrive$2f$Desktop$2f$Garvis__42$2f$garvis42$2f$next$2d$app$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])([]);
+(0, __TURBOPACK__imported__module__$5b$project$5d2f$OneDrive$2f$Desktop$2f$Garvis__42$2f$garvis42$2f$next$2d$app$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
+    fetch('/api/pigpen').then((res)=>res.json()).then((data)=>setOperatorData(data));
+}, []);
 const clusters = [
     "Executive & Architecture",
     "Creative Engine"
@@ -674,6 +579,11 @@ function PigPenPage() {
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$OneDrive$2f$Desktop$2f$Garvis__42$2f$garvis42$2f$next$2d$app$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(DocumentHandler, {}, void 0, false, {
                             fileName: "[project]/OneDrive/Desktop/Garvis 42/garvis42/next-app/app/pigpen/page.tsx",
                             lineNumber: 109,
+                            columnNumber: 11
+                        }, this),
+                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$OneDrive$2f$Desktop$2f$Garvis__42$2f$garvis42$2f$next$2d$app$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(TracePanel, {}, void 0, false, {
+                            fileName: "[project]/OneDrive/Desktop/Garvis 42/garvis42/next-app/app/pigpen/page.tsx",
+                            lineNumber: 112,
                             columnNumber: 11
                         }, this)
                     ]

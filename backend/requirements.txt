@@ -1,3 +1,7 @@
+pypdf2
+reportlab
+python-docx
+openpyxl
 # LiteLLM for multi-provider LLM support
 litellm>=1.78,<2.0
 # motor==3.6.0  # MongoDB async driver, pinned for stability

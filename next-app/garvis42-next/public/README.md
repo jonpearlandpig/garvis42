@@ -1,0 +1,1 @@
+This is a placeholder. Move your static assets (images, favicon, etc.) here for Next.js public access.
