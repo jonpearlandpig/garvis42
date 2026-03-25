@@ -272,6 +272,26 @@ class ChatResponse(BaseModel):
     response: str
     session_id: str
 
+class AdviseRequest(BaseModel):
+    task: str
+    session_id: Optional[str] = None
+    operator_ids: Optional[List[str]] = None  # Explicit operator selection (bypasses MOSE auto-routing)
+    top_n: int = 3  # Max operators to invoke via MOSE
+
+class OperatorInvoked(BaseModel):
+    id: str
+    name: str
+    title: str
+    cluster: str
+    decision_weight: int
+    core_instinct: Optional[str] = None
+
+class AdviseResponse(BaseModel):
+    advice: str
+    session_id: str
+    operators_invoked: List[OperatorInvoked]
+    routing_trace: str
+
 class FileUploadResponse(BaseModel):
     file_id: str
     filename: str
@@ -1099,7 +1119,7 @@ async def delete_file(file_id: str):
 async def chat_with_garvis(request_body: ChatRequest):
     session_id = request_body.session_id or str(uuid.uuid4())
     try:
-        # Build message with file attachments
+        # Build user message with file attachments
         message_text = request_body.message
         if request_body.file_ids:
             document_context = []
@@ -1112,8 +1132,20 @@ async def chat_with_garvis(request_body: ChatRequest):
             if document_context:
                 context_text = "\n\n".join(document_context)
                 message_text = f"Context from uploaded documents:\n{context_text}\n\nUser question: {request_body.message}"
-        messages = [{"role": "user", "content": message_text}]
+
+        # Load conversation history for this session (last 20 turns)
+        history = await db.chat_history.find(
+            {"session_id": session_id}, {"_id": 0, "role": 1, "content": 1}
+        ).sort("timestamp", 1).to_list(20)
+
+        # Build messages: system prompt + history + current user message
+        messages = [{"role": "system", "content": SYSTEM_MESSAGE}]
+        for h in history:
+            messages.append({"role": h["role"], "content": h["content"]})
+        messages.append({"role": "user", "content": message_text})
+
         response = await proxy_llm(messages)
+
         # Store chat history with file references
         await db.chat_history.insert_one({
             "session_id": session_id,
@@ -1144,6 +1176,150 @@ async def clear_chat_session(session_id: str):
         del chat_sessions[session_id]
     await db.chat_history.delete_many({"session_id": session_id})
     return {"message": "Session cleared", "session_id": session_id}
+
+# ============== MOSE: Multi-Operator Routing & Advise ==============
+
+def mose_route_operators(task: str, operators: List[dict], top_n: int = 3) -> tuple[List[dict], str]:
+    """
+    Route a task to the most relevant operators using keyword matching against
+    focus_areas, weighted by decision_weight. Returns (selected_operators, trace).
+    """
+    task_lower = task.lower()
+    scored = []
+    matched_keywords: List[str] = []
+
+    for op in operators:
+        score = 0
+        for area in op.get("focus_areas", []):
+            # Each focus area phrase contributes if any of its significant words hit
+            area_words = [w for w in area.lower().split() if len(w) > 3]
+            for word in area_words:
+                if word in task_lower:
+                    score += 1
+                    if word not in matched_keywords:
+                        matched_keywords.append(word)
+        if score > 0:
+            weighted = score * op.get("decision_weight", 1)
+            scored.append((weighted, score, op))
+
+    # Sort by weighted score desc, then decision_weight desc as tiebreaker
+    scored.sort(key=lambda x: (x[0], x[2].get("decision_weight", 1)), reverse=True)
+    selected = [op for _, _, op in scored[:top_n]]
+
+    if selected:
+        names = ", ".join(f"{op['name']} ({op['cluster']})" for op in selected)
+        trace = f"MOSE matched keywords [{', '.join(matched_keywords[:8])}] → routed to: {names}"
+    else:
+        trace = "MOSE found no keyword matches; falling back to Command cluster (highest authority)"
+
+    return selected, trace
+
+
+def build_operator_system_prompt(task: str, operators: List[dict]) -> str:
+    """Build a system prompt that injects operator personas for the advise call."""
+    base = (
+        "You are GARVIS, the sovereign intelligence assistant. "
+        "The MOSE routing layer has invoked the following advisor operators to address this task. "
+        "Synthesize their distinct perspectives into a single, authoritative response. "
+        "For each operator, reason from their thinking style and core instinct before blending into your final answer.\n\n"
+    )
+    for op in operators:
+        focus = ", ".join(op.get("focus_areas", [])[:4])
+        lines = [
+            f"**{op['name']} — {op['title']} [{op['cluster']}] (Weight: {op.get('decision_weight', '?')})**",
+        ]
+        if op.get("thinking_style"):
+            lines.append(f"  Thinking style: {op['thinking_style']}")
+        if op.get("core_instinct"):
+            lines.append(f"  Core instinct: {op['core_instinct']}")
+        if focus:
+            lines.append(f"  Focus areas: {focus}")
+        base += "\n".join(lines) + "\n\n"
+    base += f"Task: {task}"
+    return base
+
+
+@api_router.post("/advise", response_model=AdviseResponse)
+async def advise(request_body: AdviseRequest):
+    """
+    MOSE-powered advisor endpoint. Routes the task to relevant Pig Pen operators,
+    injects their personas into the system prompt, and returns attributed advice.
+    """
+    session_id = request_body.session_id or str(uuid.uuid4())
+
+    # Load all active operators from the registry
+    all_operators = await db.pigpen_operators.find({"is_active": True}, {"_id": 0}).to_list(100)
+
+    # Determine which operators to invoke
+    if request_body.operator_ids:
+        # Explicit selection — bypass MOSE auto-routing
+        id_set = set(request_body.operator_ids)
+        selected = [op for op in all_operators if op.get("tai_d") in id_set or op.get("id") in id_set]
+        trace = f"Explicit operator selection: {', '.join(op['name'] for op in selected)}"
+    else:
+        selected, trace = mose_route_operators(request_body.task, all_operators, request_body.top_n)
+
+    # Fallback to highest-weight operators if nothing matched
+    if not selected:
+        selected = sorted(all_operators, key=lambda o: o.get("decision_weight", 0), reverse=True)[:request_body.top_n]
+        trace += f" → fallback to top-weight operators: {', '.join(op['name'] for op in selected)}"
+
+    # Build operator-aware system prompt
+    system_prompt = build_operator_system_prompt(request_body.task, selected)
+
+    # Load advise session history (last 10 turns)
+    history = await db.chat_history.find(
+        {"session_id": session_id, "type": "advise"}, {"_id": 0, "role": 1, "content": 1}
+    ).sort("timestamp", 1).to_list(10)
+
+    messages = [{"role": "system", "content": system_prompt}]
+    for h in history:
+        messages.append({"role": h["role"], "content": h["content"]})
+    messages.append({"role": "user", "content": request_body.task})
+
+    try:
+        response = await proxy_llm(messages)
+    except Exception as e:
+        logger.error(f"Advise LLM error: {e}")
+        raise HTTPException(status_code=500, detail=f"Advise error: {str(e)}")
+
+    # Persist advise turns to chat history (tagged type=advise)
+    now = datetime.now(timezone.utc).isoformat()
+    await db.chat_history.insert_many([
+        {"session_id": session_id, "type": "advise", "role": "user",
+         "content": request_body.task, "routing_trace": trace, "timestamp": now},
+        {"session_id": session_id, "type": "advise", "role": "assistant",
+         "content": response, "operators": [op.get("name") for op in selected], "timestamp": now},
+    ])
+
+    operators_invoked = [
+        OperatorInvoked(
+            id=op.get("tai_d") or op.get("id", ""),
+            name=op.get("name", ""),
+            title=op.get("title") or op.get("role", ""),
+            cluster=op.get("cluster") or op.get("category", ""),
+            decision_weight=op.get("decision_weight", 0),
+            core_instinct=op.get("core_instinct"),
+        )
+        for op in selected
+    ]
+
+    return AdviseResponse(
+        advice=response,
+        session_id=session_id,
+        operators_invoked=operators_invoked,
+        routing_trace=trace,
+    )
+
+
+@api_router.get("/advise/history/{session_id}")
+async def get_advise_history(session_id: str):
+    """Get advise session history with operator attribution."""
+    messages = await db.chat_history.find(
+        {"session_id": session_id, "type": "advise"}, {"_id": 0}
+    ).sort("timestamp", 1).to_list(100)
+    return {"messages": messages, "session_id": session_id}
+
 
 # ============== Dashboard Stats ==============
 
