@@ -1183,10 +1183,12 @@ async def health_check():
 from routers.operators import router as operators_router
 from routers.invocations import router as invocations_router
 from routers.tourtext import router as tourtext_router
+from routers.tourtext_auth import router as tourtext_auth_router
 app.include_router(api_router)
 app.include_router(operators_router)
 app.include_router(invocations_router)
 app.include_router(tourtext_router)
+app.include_router(tourtext_auth_router)
 
 app.add_middleware(
     CORSMiddleware,

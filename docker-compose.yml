@@ -30,6 +30,7 @@ services:
       - SUPABASE_URL=${SUPABASE_URL:-}
       - SUPABASE_KEY=${SUPABASE_KEY:-}
       - SUPABASE_BUCKET=${SUPABASE_BUCKET:-tourtext-files}
+      - TOURTEXT_JWT_SECRET=${TOURTEXT_JWT_SECRET:-change-me-in-production}
     volumes:
       - ./backend:/app
     command: uvicorn server:app --host 0.0.0.0 --port 8000 --reload
@@ -47,6 +48,22 @@ services:
       - VITE_API_URL=http://backend:8000
     volumes:
       - ./frontend:/app
+    command: npm run dev
+
+  tourtext-frontend:
+    build:
+      context: ./tourtext-frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "5174:5174"
+    depends_on:
+      - backend
+    environment:
+      - VITE_API_URL=http://backend:8000
+    volumes:
+      - ./tourtext-frontend:/app
+      - /app/node_modules
     command: npm run dev
 
 volumes:
