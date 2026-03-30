@@ -5,6 +5,12 @@ fastapi
 uvicorn
 pydantic[email]
 python-dotenv
+# TourText Emergent dependencies
+twilio>=9.0.0,<10.0
+openai>=1.0.0,<2.0
+pdfplumber>=0.10.0,<1.0
+openpyxl>=3.1.0,<4.0
+supabase>=2.0.0,<3.0
 googleapis-common-protos>=1.72.0,<2.0
 grpcio>=1.76.0,<2.0
 grpcio-status>=1.71.2,<2.0
