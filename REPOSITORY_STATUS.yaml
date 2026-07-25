@@ -1,0 +1,16 @@
+schema_version: "1.0"
+system_id: GARVIS
+classification: canonical_candidate
+canonical_repository: true
+status: active_review
+owner: Jon Hartman
+may_receive_changes: true
+donor_to: null
+successor: null
+governance_version: "Pearl & Pig Governance v0.2"
+approved_on: "2026-07-25"
+conditions:
+  - deterministic_core_must_operate_without_llm
+  - governance_store_api_intelligence_ui_boundaries_must_be_documented
+  - provider_specific_code_must_remain_replaceable
+notes: "Founder-approved canonical implementation candidate. Promotion to canonical requires modularity and deterministic-core proof."
